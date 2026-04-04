@@ -552,6 +552,29 @@ hr.div { border: none; border-top: 1px solid var(--border); margin: 1rem 0; }
 </head>
 <body>
 
+<!-- PASSWORD OVERLAY -->
+<div id="auth-overlay" style="display:none;position:fixed;inset:0;z-index:1000;background:#0D0F0E;align-items:center;justify-content:center;flex-direction:column">
+  <div style="width:100%;max-width:360px;padding:2rem 1.5rem">
+    <div style="font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:700;color:#F2F0EB;margin-bottom:4px">D.M <span style="color:#4ADE80">// fit</span></div>
+    <div id="auth-subtitle" style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:2rem;font-family:'JetBrains Mono',monospace">Personal fitness dashboard</div>
+    <div id="auth-setup-msg" style="display:none;background:#1A3326;border:1px solid rgba(74,222,128,0.3);border-radius:8px;padding:10px 14px;font-size:12px;color:#4ADE80;margin-bottom:1rem;line-height:1.6">
+      First time setup — create your password below. You'll only need to enter it once per device.
+    </div>
+    <div id="auth-error" style="display:none;background:#2D1010;border:1px solid rgba(248,113,113,0.3);border-radius:8px;padding:10px 14px;font-size:12px;color:#F87171;margin-bottom:1rem">
+      Incorrect password. Try again.
+    </div>
+    <div style="margin-bottom:1rem">
+      <label style="font-size:11px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.35);display:block;margin-bottom:6px" id="auth-label">Password</label>
+      <input id="auth-input" type="password" style="width:100%;background:#1C1F1D;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:12px 14px;color:#F2F0EB;font-size:15px;font-family:'Instrument Sans',sans-serif;outline:none;transition:border-color 0.15s" placeholder="Enter password" onkeydown="if(event.key==='Enter')submitAuth()">
+    </div>
+    <div id="auth-confirm-wrap" style="display:none;margin-bottom:1rem">
+      <label style="font-size:11px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.35);display:block;margin-bottom:6px">Confirm Password</label>
+      <input id="auth-confirm" type="password" style="width:100%;background:#1C1F1D;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:12px 14px;color:#F2F0EB;font-size:15px;font-family:'Instrument Sans',sans-serif;outline:none" placeholder="Confirm password" onkeydown="if(event.key==='Enter')submitAuth()">
+    </div>
+    <button onclick="submitAuth()" style="width:100%;background:#4ADE80;border:none;border-radius:8px;padding:12px;font-size:15px;font-weight:600;font-family:'Instrument Sans',sans-serif;color:#000;cursor:pointer;transition:background 0.15s" id="auth-btn">Enter</button>
+  </div>
+</div>
+
 <nav>
   <div class="nav-brand">D.M <span>// fit</span></div>
   <div class="nav-tabs">
@@ -2698,12 +2721,89 @@ function clearAllData() {
 }
 
 // ============================================================
+// AUTH
+// ============================================================
+const AUTH_KEY = 'dm_fit_auth';
+const PASS_KEY = 'dm_fit_pass';
+
+function hashPassword(pw) {
+  // Simple hash — not cryptographic but sufficient for personal use
+  let hash = 0;
+  for (let i = 0; i < pw.length; i++) {
+    hash = ((hash << 5) - hash) + pw.charCodeAt(i);
+    hash |= 0;
+  }
+  return hash.toString(36) + pw.length.toString(36) + 'dmfit';
+}
+
+function checkAuth() {
+  const overlay = document.getElementById('auth-overlay');
+  const storedPass = localStorage.getItem(PASS_KEY);
+  const isAuthed = localStorage.getItem(AUTH_KEY) === 'true';
+
+  if (!storedPass) {
+    // First time — setup mode
+    overlay.style.display = 'flex';
+    document.getElementById('auth-setup-msg').style.display = 'block';
+    document.getElementById('auth-confirm-wrap').style.display = 'block';
+    document.getElementById('auth-btn').textContent = 'Create Password';
+    document.getElementById('auth-label').textContent = 'Choose a Password';
+    document.getElementById('auth-subtitle').textContent = 'First time setup';
+    return false;
+  }
+
+  if (isAuthed) {
+    overlay.style.display = 'none';
+    return true;
+  }
+
+  // Has password, not yet authed this session
+  overlay.style.display = 'flex';
+  return false;
+}
+
+function submitAuth() {
+  const input = document.getElementById('auth-input').value;
+  const storedPass = localStorage.getItem(PASS_KEY);
+  const errorEl = document.getElementById('auth-error');
+
+  if (!storedPass) {
+    // Setup mode — creating password
+    const confirm = document.getElementById('auth-confirm').value;
+    if (!input || input.length < 4) {
+      errorEl.textContent = 'Password must be at least 4 characters.';
+      errorEl.style.display = 'block'; return;
+    }
+    if (input !== confirm) {
+      errorEl.textContent = 'Passwords do not match.';
+      errorEl.style.display = 'block'; return;
+    }
+    localStorage.setItem(PASS_KEY, hashPassword(input));
+    localStorage.setItem(AUTH_KEY, 'true');
+    document.getElementById('auth-overlay').style.display = 'none';
+    showToast('Password set ✓ You're in.');
+    return;
+  }
+
+  // Login mode
+  if (hashPassword(input) === storedPass) {
+    localStorage.setItem(AUTH_KEY, 'true');
+    document.getElementById('auth-overlay').style.display = 'none';
+    errorEl.style.display = 'none';
+  } else {
+    errorEl.textContent = 'Incorrect password. Try again.';
+    errorEl.style.display = 'block';
+    document.getElementById('auth-input').value = '';
+  }
+}
+
+// ============================================================
 // INIT
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
+  checkAuth();
   const loaded = tryBootstrap();
   if (loaded) {
-    // Hide load prompt since we got data from localStorage
     const ls = document.getElementById('load-data-section');
     if (ls) ls.style.display = 'none';
   }
