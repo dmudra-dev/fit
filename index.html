@@ -1,0 +1,3085 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Daniel — Fitness Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=JetBrains+Mono:wght@300;400;500&family=Instrument+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0D0F0E;
+  --surface: #141716;
+  --surface2: #1C1F1D;
+  --border: rgba(255,255,255,0.07);
+  --green: #4ADE80;
+  --green-dim: #1A3326;
+  --amber: #F59E0B;
+  --amber-dim: #2D1F07;
+  --red: #F87171;
+  --red-dim: #2D1010;
+  --blue: #60A5FA;
+  --blue-dim: #0F1E35;
+  --purple: #A78BFA;
+  --muted: rgba(255,255,255,0.35);
+  --muted2: rgba(255,255,255,0.18);
+  --text: #F2F0EB;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Instrument Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* NAV */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(13,15,14,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 1.25rem;
+  height: 52px;
+}
+.nav-brand {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+.nav-brand span { color: var(--green); }
+.nav-tabs {
+  display: flex; gap: 2px;
+}
+.nav-tab {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--muted);
+  padding: 5px 12px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.04em;
+}
+.nav-tab:hover { color: var(--text); background: var(--surface); }
+.nav-tab.active { color: var(--green); background: var(--green-dim); }
+.nav-actions { display: flex; gap: 8px; align-items: center; }
+.btn-sm {
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 12px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-sm:hover { border-color: var(--green); color: var(--green); }
+.btn-primary {
+  background: var(--green);
+  color: #000;
+  border-color: var(--green);
+  font-weight: 600;
+}
+.btn-primary:hover { background: #22c55e; border-color: #22c55e; color: #000; }
+
+/* LAYOUT */
+main { padding-top: 52px; }
+.page { display: none; padding: 1.5rem 1.25rem 5rem; max-width: 900px; margin: 0 auto; }
+.page.active { display: block; animation: fadeUp 0.25s ease; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+/* SECTION LABEL */
+.eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 1rem;
+}
+
+/* GRID */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+@media (max-width: 640px) {
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 400px) {
+  .grid-3, .grid-4 { grid-template-columns: 1fr 1fr; }
+}
+
+/* CARDS */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.1rem 1.25rem;
+  margin-bottom: 10px;
+}
+.card-sm {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.9rem 1rem;
+}
+.card-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  margin-bottom: 0.6rem;
+}
+
+/* METRIC CARDS */
+.metric-value {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.2rem;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+.metric-unit { font-size: 14px; font-weight: 400; opacity: 0.6; margin-left: 2px; }
+.metric-label { font-size: 12px; color: var(--muted); }
+.metric-delta { font-family: 'JetBrains Mono', monospace; font-size: 11px; margin-top: 4px; }
+.delta-pos { color: var(--green); }
+.delta-neg { color: var(--red); }
+.delta-neu { color: var(--muted); }
+
+/* PROGRESS RING */
+.ring-wrap { position: relative; display: inline-block; }
+.ring-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; }
+.ring-pct { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 700; line-height: 1; }
+.ring-lbl { font-size: 9px; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+
+/* BARS */
+.bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.bar-row:last-child { margin-bottom: 0; }
+.bar-label { font-size: 12px; color: var(--muted); min-width: 60px; }
+.bar-track { flex: 1; height: 5px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+.bar-val { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); min-width: 36px; text-align: right; }
+
+/* WEEK GRID */
+.week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 0; }
+.week-day {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 4px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.week-day:hover { border-color: var(--green); }
+.week-day.done { background: var(--green-dim); border-color: rgba(74,222,128,0.3); }
+.week-day.skipped { background: var(--red-dim); border-color: rgba(248,113,113,0.2); }
+.week-day.today { border-color: var(--amber); }
+.week-day-name { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 5px; }
+.week-day-icon { font-size: 18px; line-height: 1; margin-bottom: 3px; }
+.week-day-label { font-size: 9px; font-weight: 500; }
+.week-day.done .week-day-label { color: var(--green); }
+.week-day.skipped .week-day-label { color: var(--red); }
+.week-day-type { font-size: 9px; color: var(--muted); margin-top: 2px; }
+
+/* ACTIVITY LOG */
+.activity-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.activity-row:last-child { border-bottom: none; padding-bottom: 0; }
+.activity-row:first-child { padding-top: 0; }
+.act-icon { font-size: 20px; min-width: 28px; }
+.act-body { flex: 1; }
+.act-name { font-size: 14px; font-weight: 500; }
+.act-meta { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); margin-top: 2px; }
+.act-badge { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 500; padding: 2px 8px; border-radius: 12px; white-space: nowrap; }
+.badge-green { background: var(--green-dim); color: var(--green); }
+.badge-amber { background: var(--amber-dim); color: var(--amber); }
+.badge-blue { background: var(--blue-dim); color: var(--blue); }
+.badge-red { background: var(--red-dim); color: var(--red); }
+
+/* MEAL LOG */
+.meal-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.meal-img { width: 50px; height: 50px; border-radius: 6px; object-fit: cover; background: var(--surface); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 24px; border: 1px solid var(--border); }
+.meal-body { flex: 1; }
+.meal-name { font-size: 14px; font-weight: 500; margin-bottom: 2px; }
+.meal-macros { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); display: flex; gap: 10px; flex-wrap: wrap; }
+.meal-macro-item { display: flex; flex-direction: column; }
+.meal-macro-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.05em; }
+.meal-macro-val { font-size: 12px; color: var(--text); font-weight: 500; }
+.meal-time { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 4px; }
+
+/* GOAL TRACKER */
+.goal-block {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+}
+.goal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+.goal-name { font-size: 14px; font-weight: 600; }
+.goal-dates { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); }
+.goal-progress-track { height: 6px; background: var(--surface); border-radius: 3px; overflow: hidden; margin-bottom: 6px; }
+.goal-progress-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--green), #22d3ee); transition: width 0.8s ease; }
+.goal-stats { display: flex; gap: 16px; }
+.goal-stat { display: flex; flex-direction: column; }
+.goal-stat-label { font-size: 9px; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.goal-stat-val { font-size: 14px; font-weight: 600; }
+
+/* PACE CHART */
+.spark-chart { position: relative; height: 60px; }
+.spark-canvas { width: 100%; height: 100%; }
+
+/* ALCOHOL TRACKER */
+.drink-grid { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
+.drink-dot {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 2px solid var(--border);
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+.drink-dot.used { background: var(--amber-dim); border-color: var(--amber); }
+.drink-dot.over { background: var(--red-dim); border-color: var(--red); }
+
+/* MODAL */
+.modal-overlay {
+  display: none;
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(4px);
+  align-items: flex-end;
+  justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px 16px 0 0;
+  width: 100%; max-width: 600px;
+  padding: 1.5rem 1.5rem 2.5rem;
+  animation: slideUp 0.2s ease;
+}
+@keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.modal-title { font-family: 'Playfair Display', serif; font-size: 1.2rem; font-weight: 600; margin-bottom: 1rem; }
+.modal-close { float: right; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 20px; margin-top: -4px; }
+
+/* FORM */
+.form-group { margin-bottom: 1rem; }
+.form-label { font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 4px; display: block; }
+.form-input {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: var(--text);
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.form-input:focus { border-color: var(--green); }
+.form-select {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: var(--text);
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 14px;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+}
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* UPLOAD ZONE */
+.upload-zone {
+  border: 2px dashed var(--border);
+  border-radius: 10px;
+  padding: 2rem 1rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+  overflow: hidden;
+}
+.upload-zone:hover, .upload-zone.dragover { border-color: var(--green); background: var(--green-dim); }
+.upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+.upload-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+.upload-text { font-size: 14px; color: var(--muted); }
+.upload-text strong { color: var(--text); }
+
+/* STATUS BAR */
+.status-bar {
+  display: flex;
+  gap: 6px;
+  padding: 10px 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  align-items: center;
+}
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; flex-shrink: 0; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+/* STRAVA / GARMIN IMPORT */
+.import-zone {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.25rem;
+  margin-bottom: 10px;
+  background: var(--surface2);
+}
+.import-header { display: flex; align-items: center; gap: 10px; margin-bottom: 0.75rem; }
+.import-logo { font-size: 1.4rem; }
+.import-name { font-weight: 600; font-size: 14px; }
+.import-desc { font-size: 12px; color: var(--muted); line-height: 1.5; margin-bottom: 0.75rem; }
+.import-steps { font-size: 12px; color: var(--muted); line-height: 1.9; }
+.import-steps strong { color: var(--text); }
+.import-steps code { font-family: 'JetBrains Mono', monospace; background: var(--surface); padding: 1px 5px; border-radius: 3px; font-size: 11px; color: var(--green); }
+
+/* AI ANALYSIS BOX */
+.ai-result {
+  background: var(--green-dim);
+  border: 1px solid rgba(74,222,128,0.2);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-top: 10px;
+  display: none;
+}
+.ai-result.show { display: block; }
+.ai-result-title { font-size: 11px; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: 0.06em; color: var(--green); margin-bottom: 6px; }
+.ai-result-text { font-size: 13px; color: var(--text); line-height: 1.6; }
+.ai-loading { display: none; text-align: center; padding: 1rem; color: var(--muted); font-size: 13px; }
+.ai-loading.show { display: block; }
+.spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--green); border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* COUNTDOWN */
+.countdown-banner {
+  background: linear-gradient(135deg, #0D1F1A, #0A1A2B);
+  border: 1px solid rgba(74,222,128,0.15);
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  overflow: hidden;
+  position: relative;
+}
+.countdown-banner::before {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(74,222,128,0.06), transparent 70%);
+  pointer-events: none;
+}
+.countdown-icon { font-size: 2.5rem; flex-shrink: 0; }
+.countdown-body { flex: 1; }
+.countdown-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 2px; }
+.countdown-days { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 700; color: var(--green); line-height: 1; }
+.countdown-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.countdown-rings { display: flex; gap: 12px; align-items: center; }
+
+/* COACHING NUDGE */
+.nudge {
+  background: var(--amber-dim);
+  border: 1px solid rgba(245,158,11,0.2);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.nudge-icon { font-size: 18px; flex-shrink: 0; }
+.nudge-text { font-size: 13px; color: #FCD34D; line-height: 1.5; }
+
+/* TABS within page */
+.inner-tabs { display: flex; gap: 4px; margin-bottom: 1rem; flex-wrap: wrap; }
+.inner-tab {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  padding: 5px 12px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.03em;
+}
+.inner-tab.active { background: var(--surface2); color: var(--text); border-color: rgba(255,255,255,0.15); }
+.inner-panel { display: none; }
+.inner-panel.active { display: block; }
+
+/* WEIGHT CHART */
+.weight-chart-wrap { height: 120px; position: relative; }
+canvas.weight-chart { width: 100%; height: 100%; }
+
+/* SECTION ROW */
+.section-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.75rem; margin-top: 1.5rem; }
+.section-row:first-child { margin-top: 0; }
+.section-title { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 600; }
+.section-action { font-size: 12px; color: var(--green); cursor: pointer; background: none; border: none; font-family: 'Instrument Sans', sans-serif; }
+.section-action:hover { text-decoration: underline; }
+
+/* EMPTY STATE */
+.empty-state { text-align: center; padding: 3rem 1rem; color: var(--muted); }
+.empty-state-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+.empty-state-text { font-size: 14px; line-height: 1.6; }
+
+/* 9-WEEK GRID */
+.nine-week-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; }
+.nw-cell {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 6px 4px;
+  text-align: center;
+}
+.nw-cell.current { border-color: var(--amber); }
+.nw-cell.done { background: var(--green-dim); border-color: rgba(74,222,128,0.25); }
+.nw-cell.cruise { background: linear-gradient(135deg, #0D1F1A, #0A1A2B); border-color: rgba(74,222,128,0.4); }
+.nw-num { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--muted); }
+.nw-label { font-size: 8px; color: var(--muted); margin-top: 2px; }
+.nw-cell.done .nw-label, .nw-cell.done .nw-num { color: var(--green); }
+.nw-cell.cruise .nw-label { color: var(--green); }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+
+/* DIVIDER */
+hr.div { border: none; border-top: 1px solid var(--border); margin: 1rem 0; }
+
+/* IMAGE PREVIEW */
+.img-preview-wrap { display: none; margin-top: 10px; }
+.img-preview-wrap.show { display: block; }
+.img-preview { width: 100%; max-height: 220px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); }
+
+/* TOAST */
+.toast {
+  position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(10px);
+  background: var(--surface);
+  border: 1px solid var(--green);
+  color: var(--green);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  padding: 8px 20px;
+  border-radius: 20px;
+  z-index: 300;
+  opacity: 0;
+  transition: all 0.25s;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* MOBILE NAV */
+@media (max-width: 600px) {
+  .nav-tabs { display: none; }
+  .mobile-nav {
+    display: flex;
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: rgba(13,15,14,0.95);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--border);
+    z-index: 100;
+    padding: 6px 0 max(6px, env(safe-area-inset-bottom));
+    justify-content: space-around;
+  }
+  .mobile-nav-item {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 3px; padding: 4px 8px;
+    border: none; background: none;
+    color: var(--muted); cursor: pointer;
+    font-size: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    transition: color 0.15s;
+  }
+  .mobile-nav-item.active { color: var(--green); }
+  .mobile-nav-item .mnav-icon { font-size: 20px; }
+}
+@media (min-width: 601px) {
+  .mobile-nav { display: none; }
+}
+</style>
+</head>
+<body>
+
+
+<nav>
+  <div class="nav-brand">D.M <span>// fit</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('dashboard',this)">Dashboard</button>
+    <button class="nav-tab" onclick="showPage('activity',this)">Activity</button>
+    <button class="nav-tab" onclick="showPage('nutrition',this)">Nutrition</button>
+    <button class="nav-tab" onclick="showPage('goals',this)">Goals</button>
+    <button class="nav-tab" onclick="showPage('import',this)">Import</button>
+  </div>
+  <div class="nav-actions">
+    <button class="btn-sm" onclick="downloadData()" title="Save data to file">&#128190; Save</button>
+  </div>
+</nav>
+
+<!-- Save reminder bar -->
+<div id="save-reminder" style="display:none;position:fixed;top:52px;left:0;right:0;z-index:99;background:#2D1F07;border-bottom:1px solid #F59E0B;padding:8px 1.25rem;align-items:center;justify-content:space-between;gap:12px">
+  <span style="font-size:12px;color:#F59E0B">&#9888; You have unsaved changes &#8212; download your data file to keep them.</span>
+  <div style="display:flex;gap:8px">
+    <button onclick="downloadData()" style="font-size:12px;padding:5px 12px;border-radius:5px;border:1px solid #F59E0B;background:transparent;color:#F59E0B;cursor:pointer">&#128190; Save Now</button>
+    <button onclick="hideSaveReminder()" style="font-size:12px;padding:5px 12px;border-radius:5px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:rgba(255,255,255,0.4);cursor:pointer">Dismiss</button>
+  </div>
+</div>
+
+<!-- MOBILE NAV -->
+<div class="mobile-nav">
+  <button class="mobile-nav-item active" onclick="showPage('dashboard',this,'mobile')"><span class="mnav-icon">📊</span>Dash</button>
+  <button class="mobile-nav-item" onclick="showPage('activity',this,'mobile')"><span class="mnav-icon">🏃</span>Activity</button>
+  <button class="mobile-nav-item" onclick="showPage('nutrition',this,'mobile')"><span class="mnav-icon">🥗</span>Nutrition</button>
+  <button class="mobile-nav-item" onclick="showPage('goals',this,'mobile')"><span class="mnav-icon">🎯</span>Goals</button>
+  <button class="mobile-nav-item" onclick="showPage('import',this,'mobile')"><span class="mnav-icon">📥</span>Import</button>
+</div>
+
+<main>
+
+<!-- ======= DASHBOARD ======= -->
+<div id="page-dashboard" class="page active">
+
+  <!-- Daily Headline Suggestion -->
+  <div id="headline-card" style="background:linear-gradient(135deg,#0D1F1A,#0F1827);border:1px solid rgba(74,222,128,0.18);border-radius:12px;padding:1.1rem 1.25rem;margin-bottom:10px;position:relative;overflow:hidden;">
+    <div style="position:absolute;top:0;right:0;width:180px;height:180px;background:radial-gradient(circle,rgba(74,222,128,0.05),transparent 70%);pointer-events:none"></div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:rgba(74,222,128,0.6);margin-bottom:6px" id="headline-label">Today's focus</div>
+    <div style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:600;color:var(--text);line-height:1.4;margin-bottom:4px" id="headline-text">Loading your daily suggestion...</div>
+    <div style="font-size:12px;color:rgba(255,255,255,0.45);line-height:1.5;margin-bottom:8px" id="headline-sub"></div>
+    <!-- Daily read/watch/listen link -->
+    <div id="headline-link-wrap" style="display:none;margin-bottom:10px">
+      <a id="headline-link" href="#" target="_blank" style="display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:5px 12px;font-size:11px;color:var(--text);text-decoration:none;transition:all 0.15s" onmouseover="this.style.borderColor='rgba(74,222,128,0.5)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)'">
+        <span id="headline-link-icon">▶</span>
+        <span id="headline-link-label">Loading...</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(255,255,255,0.35)" id="headline-link-duration"></span>
+      </a>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+      <div style="display:flex;gap:10px">
+        <div style="text-align:center">
+          <svg width="44" height="44"><circle cx="22" cy="22" r="17" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="4"/><circle id="ring-weight" cx="22" cy="22" r="17" fill="none" stroke="#4ADE80" stroke-width="4" stroke-linecap="round" stroke-dasharray="106.8" stroke-dashoffset="106.8" transform="rotate(-90 22 22)" style="transition:stroke-dashoffset 1s ease"/></svg>
+          <div style="font-size:8px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:-6px">FAT LOSS</div>
+        </div>
+        <div style="text-align:center">
+          <svg width="44" height="44"><circle cx="22" cy="22" r="17" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="4"/><circle id="ring-runs" cx="22" cy="22" r="17" fill="none" stroke="#60A5FA" stroke-width="4" stroke-linecap="round" stroke-dasharray="106.8" stroke-dashoffset="106.8" transform="rotate(-90 22 22)" style="transition:stroke-dashoffset 1s ease"/></svg>
+          <div style="font-size:8px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:-6px">PLAN TIME</div>
+        </div>
+      </div>
+      <div style="text-align:right;cursor:pointer" onclick="showPage('goals',document.querySelector('[onclick*=goals]'))">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.3)" id="goal-label-text">Fat Loss Goal</div>
+        <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;color:var(--green)" id="cruise-days">—</div>
+        <div style="font-size:11px;color:var(--muted)" id="cruise-sub"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Coaching nudge -->
+  <div id="coaching-nudge" class="nudge" style="display:none">
+    <div class="nudge-icon">💡</div>
+    <div class="nudge-text" id="nudge-text"></div>
+  </div>
+
+  <!-- Quick Log Row -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+    <button onclick="openActivityModal()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 8px;cursor:pointer;color:var(--text);font-family:'Instrument Sans',sans-serif;transition:border-color 0.15s" onmouseover="this.style.borderColor='var(--green)'" onmouseout="this.style.borderColor='var(--border)'">
+      <div style="font-size:1.4rem;margin-bottom:3px">🏃</div>
+      <div style="font-size:11px;font-weight:600">Log Run</div>
+      <div style="font-size:10px;color:var(--muted)">or workout</div>
+    </button>
+    <button onclick="openWeightModal()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 8px;cursor:pointer;color:var(--text);font-family:'Instrument Sans',sans-serif;transition:border-color 0.15s" onmouseover="this.style.borderColor='var(--green)'" onmouseout="this.style.borderColor='var(--border)'">
+      <div style="font-size:1.4rem;margin-bottom:3px">⚖️</div>
+      <div style="font-size:11px;font-weight:600">Log Weight</div>
+      <div style="font-size:10px;color:var(--muted)">morning weigh-in</div>
+    </button>
+    <button onclick="openMealModal()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 8px;cursor:pointer;color:var(--text);font-family:'Instrument Sans',sans-serif;transition:border-color 0.15s" onmouseover="this.style.borderColor='var(--green)'" onmouseout="this.style.borderColor='var(--border)'">
+      <div style="font-size:1.4rem;margin-bottom:3px">🥗</div>
+      <div style="font-size:11px;font-weight:600">Log Meal</div>
+      <div style="font-size:10px;color:var(--muted)">photo or manual</div>
+    </button>
+  </div>
+
+  <!-- Key Metrics Row -->
+  <div class="section-row"><div class="section-title">At a Glance</div><span class="section-action" onclick="openMeasureModal()">+ Waist</span></div>
+  <div class="grid-4" style="margin-bottom:10px">
+    <div class="card-sm">
+      <div class="card-title">Weight</div>
+      <div class="metric-value" id="dash-weight" style="font-size:1.8rem;color:var(--green)">—</div>
+      <div class="metric-label">lbs current</div>
+      <div class="metric-delta" id="dash-weight-delta"></div>
+    </div>
+    <div class="card-sm">
+      <div class="card-title">This Week</div>
+      <div class="metric-value" id="dash-miles" style="font-size:1.6rem;color:var(--blue)">—</div>
+      <div class="metric-label" id="dash-week-label">mi this week</div>
+      <div class="metric-delta" id="dash-runs-count"></div>
+    </div>
+    <div class="card-sm">
+      <div class="card-title">This Month</div>
+      <div class="metric-value" id="dash-month-miles" style="font-size:1.6rem;color:var(--purple)">—</div>
+      <div class="metric-label" id="dash-month-label">mi this month</div>
+      <div class="metric-delta" id="dash-month-runs"></div>
+    </div>
+    <div class="card-sm">
+      <div class="card-title">Drinks</div>
+      <div class="metric-value" id="dash-drinks" style="font-size:1.8rem;color:var(--amber)">0</div>
+      <div class="metric-label">this week</div>
+      <div class="metric-delta delta-neu" id="dash-drinks-sub">/ 4 goal</div>
+    </div>
+  </div>
+
+  <!-- This Week Exercise -->
+  <div class="section-row"><div class="section-title">This Week</div><span class="section-action" onclick="showPage('activity',document.querySelector('[onclick*=activity]'))">See all</span></div>
+  <div class="card" style="padding:0.75rem 1rem">
+    <div class="week-grid" id="week-grid"></div>
+  </div>
+
+  <!-- Pace Trend -->
+  <div class="section-row"><div class="section-title">Pace Trend at 130 bpm</div><span style="font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace">Fat adaptation signal</span></div>
+  <div class="card">
+    <canvas id="pace-chart" height="80"></canvas>
+    <div style="font-size:11px;color:var(--muted);margin-top:6px;font-family:'JetBrains Mono',monospace">Improving pace at the same heart rate = fat adaptation working ✓</div>
+  </div>
+
+  <!-- Weight Trend -->
+  <div class="section-row"><div class="section-title">Weight Trend</div><span style="font-size:11px;color:var(--muted)">Target: 155 lbs</span></div>
+  <div class="card">
+    <canvas id="weight-chart" height="80"></canvas>
+    <div style="font-size:11px;color:var(--muted);margin-top:6px;font-family:'JetBrains Mono',monospace">Waist measurement is the truer signal — update in Goals tab</div>
+  </div>
+
+  <!-- Drink tracker -->
+  <div class="section-row"><div class="section-title">Alcohol This Week</div><span class="section-action" onclick="toggleDrink()">+ Add drink</span></div>
+  <div class="card">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Tap to log. Goal: max 4/week.</div>
+    <div class="drink-grid" id="drink-dots"></div>
+    <div style="font-size:11px;color:var(--muted);margin-top:8px;font-family:'JetBrains Mono',monospace" id="drink-status"></div>
+  </div>
+
+  <!-- Recent Meals -->
+  <div class="section-row"><div class="section-title">Today's Nutrition</div><span class="section-action" onclick="showPage('nutrition',document.querySelector('[onclick*=nutrition]'))">Full log</span></div>
+  <div id="today-meals-dash">
+    <div class="empty-state" style="padding:1.5rem">
+      <div class="empty-state-icon">🥗</div>
+      <div class="empty-state-text">No meals logged today.<br>Tap <strong style="color:var(--text)">+ Log Meal</strong> to add with photo analysis.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ======= ACTIVITY ======= -->
+<div id="page-activity" class="page">
+
+  <div class="inner-tabs">
+    <button class="inner-tab active" onclick="showInner('act','week',this)">This Week</button>
+    <button class="inner-tab" onclick="showInner('act','month',this)">This Month</button>
+    <button class="inner-tab" onclick="showInner('act','ytd',this)">Year to Date</button>
+    <button class="inner-tab" onclick="showInner('act','compliance',this)">Compliance</button>
+    <button class="inner-tab" onclick="showInner('act','log',this)">Full Log</button>
+  </div>
+
+  <div id="act-panel-week" class="inner-panel active">
+    <div class="grid-3" style="margin-bottom:10px">
+      <div class="card-sm">
+        <div class="card-title">Miles Run</div>
+        <div class="metric-value" id="act-wk-miles" style="color:var(--blue)">—</div>
+        <div class="metric-label">this week</div>
+      </div>
+      <div class="card-sm">
+        <div class="card-title">Sessions</div>
+        <div class="metric-value" id="act-wk-runs" style="color:var(--green)">—</div>
+        <div class="metric-label">workouts</div>
+      </div>
+      <div class="card-sm">
+        <div class="card-title">Avg HR</div>
+        <div class="metric-value" id="act-wk-hr" style="color:var(--amber)">—</div>
+        <div class="metric-label">bpm avg</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="week-grid" id="week-grid-full"></div>
+      <div id="week-activities" style="margin-top:12px"></div>
+    </div>
+  </div>
+
+  <div id="act-panel-month" class="inner-panel">
+    <div class="grid-3" style="margin-bottom:10px">
+      <div class="card-sm">
+        <div class="card-title">Miles</div>
+        <div class="metric-value" id="act-mo-miles" style="color:var(--blue)">—</div>
+        <div class="metric-label">this month</div>
+      </div>
+      <div class="card-sm">
+        <div class="card-title">Runs</div>
+        <div class="metric-value" id="act-mo-runs" style="color:var(--green)">—</div>
+        <div class="metric-label">total</div>
+      </div>
+      <div class="card-sm">
+        <div class="card-title">Strength</div>
+        <div class="metric-value" id="act-mo-str" style="color:var(--purple)">—</div>
+        <div class="metric-label">sessions</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Monthly Activity Bars</div>
+      <div id="monthly-bars"></div>
+    </div>
+  </div>
+
+  <div id="act-panel-ytd" class="inner-panel">
+    <div class="grid-4" style="margin-bottom:10px">
+      <div class="card-sm">
+        <div class="card-title">Miles</div>
+        <div class="metric-value" id="ytd-miles" style="color:var(--blue);font-size:1.6rem">—</div>
+      </div>
+      <div class="card-sm">
+        <div class="card-title">Runs</div>
+        <div class="metric-value" id="ytd-runs" style="color:var(--green);font-size:1.6rem">—</div>
+      </div>
+      <div class="card-sm">
+        <div class="card-title">Strength</div>
+        <div class="metric-value" id="ytd-strength" style="color:var(--purple);font-size:1.6rem">—</div>
+      </div>
+      <div class="card-sm">
+        <div class="card-title">Hours</div>
+        <div class="metric-value" id="ytd-hours" style="color:var(--amber);font-size:1.6rem">—</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Miles by Month — YTD</div>
+      <canvas id="ytd-chart" height="100"></canvas>
+    </div>
+  </div>
+
+  <div id="act-panel-compliance" class="inner-panel">
+    <div class="card" style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div>
+          <div class="card-title" style="margin-bottom:2px">Plan Compliance — Last 14 Days</div>
+          <div style="font-size:11px;color:var(--muted)">Did you do what the plan called for?</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;color:var(--green)" id="compliance-pct">—</div>
+          <div style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace">% on plan</div>
+        </div>
+      </div>
+      <div id="compliance-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px"></div>
+      <div style="display:flex;gap:12px;margin-top:10px;font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace">
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:var(--green);display:inline-block"></span>Done</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:var(--red-dim);border:1px solid rgba(248,113,113,0.3);display:inline-block"></span>Missed</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:var(--surface2);display:inline-block"></span>Rest day</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:rgba(245,158,11,0.2);border:1px solid rgba(245,158,11,0.3);display:inline-block"></span>Future</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">YTD Summary</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:4px">
+        <div style="text-align:center">
+          <div style="font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:700;color:var(--green)" id="comp-ytd-done">—</div>
+          <div style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace">DAYS ON PLAN</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:700;color:var(--red)" id="comp-ytd-missed">—</div>
+          <div style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace">DAYS MISSED</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:700;color:var(--amber)" id="comp-ytd-pct">—</div>
+          <div style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace">% HIT RATE</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="act-panel-log" class="inner-panel">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem">
+      <div style="font-size:12px;color:var(--muted)">All logged activities</div>
+      <button class="btn-sm" onclick="openActivityModal()">+ Manual Entry</button>
+    </div>
+    <div class="card" id="full-log">
+      <div class="empty-state">
+        <div class="empty-state-icon">📭</div>
+        <div class="empty-state-text">No activities yet. Import from Garmin CSV<br>or add manually above.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ======= NUTRITION ======= -->
+<div id="page-nutrition" class="page">
+
+  <div class="section-row" style="margin-top:0"><div class="section-title">Today's Log</div><span class="section-action" onclick="openMealModal()">+ Log Meal</span></div>
+  <div class="status-bar">
+    <div class="status-dot"></div>
+    <span>Photo AI analysis · tap + Log Meal · upload photo or describe</span>
+  </div>
+
+  <!-- Daily Macro Summary -->
+  <div class="card" style="margin-bottom:10px">
+    <div class="card-title">Today's Macros</div>
+    <div class="grid-4" style="gap:6px;margin-bottom:10px">
+      <div style="text-align:center">
+        <div style="font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;color:var(--blue)" id="nut-cal">—</div>
+        <div style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace">KCAL</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;color:var(--green)" id="nut-prot">—<span style="font-size:11px">g</span></div>
+        <div style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace">PROTEIN</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;color:var(--amber)" id="nut-carb">—<span style="font-size:11px">g</span></div>
+        <div style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace">CARBS</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;color:var(--purple)" id="nut-fat">—<span style="font-size:11px">g</span></div>
+        <div style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace">FAT</div>
+      </div>
+    </div>
+    <div id="macro-bars">
+      <div class="bar-row"><div class="bar-label">Protein</div><div class="bar-track"><div class="bar-fill" id="bar-prot" style="width:0%;background:var(--green)"></div></div><div class="bar-val" id="bval-prot">0g</div></div>
+      <div class="bar-row"><div class="bar-label">Carbs</div><div class="bar-track"><div class="bar-fill" id="bar-carb" style="width:0%;background:var(--amber)"></div></div><div class="bar-val" id="bval-carb">0g</div></div>
+      <div class="bar-row"><div class="bar-label">Fat</div><div class="bar-track"><div class="bar-fill" id="bar-fat" style="width:0%;background:var(--purple)"></div></div><div class="bar-val" id="bval-fat">0g</div></div>
+    </div>
+  </div>
+
+  <div id="meal-log-list">
+    <div class="empty-state">
+      <div class="empty-state-icon">📷</div>
+      <div class="empty-state-text">Snap a photo of your meal — AI will identify it and estimate macros automatically.</div>
+    </div>
+  </div>
+
+  <div class="section-row"><div class="section-title">7-Day Nutrition</div></div>
+  <div class="card">
+    <div class="card-title">Protein — daily (g)</div>
+    <canvas id="protein-chart" height="70"></canvas>
+  </div>
+
+</div>
+
+<!-- ======= GOALS ======= -->
+<div id="page-goals" class="page">
+
+  <div class="inner-tabs">
+    <button class="inner-tab active" onclick="showInner('goal','active',this)">Active Goals</button>
+    <button class="inner-tab" onclick="showInner('goal','cruise',this)">Cruise Arc</button>
+    <button class="inner-tab" onclick="showInner('goal','body',this)">Body Metrics</button>
+    <button class="inner-tab" onclick="showInner('goal','history',this)">History</button>
+  </div>
+
+  <div id="goal-panel-active" class="inner-panel active">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem">
+      <div style="font-size:12px;color:var(--muted)">Training goals and targets</div>
+      <button class="btn-sm" onclick="openGoalModal()">+ New Goal</button>
+    </div>
+    <div id="active-goals-list"></div>
+    <!-- Built-in fat loss goal -->
+    <div class="goal-block">
+      <div class="goal-header">
+        <div>
+          <div class="goal-name">🎯 Fat Loss & Lean Body Composition</div>
+          <div class="goal-dates">Mar 29 → Jun 6, 2026 · <span id="goal-days-left" style="color:var(--amber)">—</span> days left</div>
+        </div>
+        <span class="act-badge badge-green">Active</span>
+      </div>
+      <div class="goal-progress-track"><div class="goal-progress-fill" id="cruise-progress" style="width:0%"></div></div>
+      <div class="goal-stats">
+        <div class="goal-stat"><div class="goal-stat-label">Week</div><div class="goal-stat-val" id="goal-current-week">—</div></div>
+        <div class="goal-stat"><div class="goal-stat-label">Weight Now</div><div class="goal-stat-val" id="goal-weight-now">—</div></div>
+        <div class="goal-stat"><div class="goal-stat-label">Target</div><div class="goal-stat-val" style="color:var(--green)">155 lbs</div></div>
+        <div class="goal-stat"><div class="goal-stat-label">To Lose</div><div class="goal-stat-val" id="goal-to-lose" style="color:var(--amber)">—</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="goal-panel-cruise" class="inner-panel">
+    <div class="card">
+      <div class="card-title">9-Week Fitness Arc</div>
+      <div class="nine-week-grid" id="nine-week-grid" style="margin-bottom:12px"></div>
+      <div class="section-row" style="margin-top:0.75rem">
+        <div style="font-size:12px;color:var(--muted)">Milestones</div>
+      </div>
+      <div id="cruise-milestones">
+        <div class="bar-row"><div class="bar-label" style="min-width:90px;font-size:11px">Week 1–2</div><div class="bar-track"><div class="bar-fill" style="background:var(--green);width:100%"></div></div><div class="bar-val" style="color:var(--green);font-size:11px">Build rhythm</div></div>
+        <div class="bar-row"><div class="bar-label" style="min-width:90px;font-size:11px">Week 3–4</div><div class="bar-track"><div class="bar-fill" id="mb-wk3" style="background:var(--amber);width:0%"></div></div><div class="bar-val" style="font-size:11px;color:var(--muted)">Holy Week</div></div>
+        <div class="bar-row"><div class="bar-label" style="min-width:90px;font-size:11px">Week 5–6</div><div class="bar-track"><div class="bar-fill" id="mb-wk5" style="background:var(--blue);width:0%"></div></div><div class="bar-val" style="font-size:11px;color:var(--muted)">Compounds</div></div>
+        <div class="bar-row"><div class="bar-label" style="min-width:90px;font-size:11px">Week 7–8</div><div class="bar-track"><div class="bar-fill" id="mb-wk7" style="background:var(--purple);width:0%"></div></div><div class="bar-val" style="font-size:11px;color:var(--muted)">Try coat</div></div>
+        <div class="bar-row"><div class="bar-label" style="min-width:90px;font-size:11px">Week 9</div><div class="bar-track"><div class="bar-fill" id="mb-wk9" style="background:var(--green);width:0%"></div></div><div class="bar-val" style="font-size:11px;color:var(--muted)">Milestone 🎯</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="goal-panel-body" class="inner-panel">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem">
+      <div style="font-size:12px;color:var(--muted)">Track body measurements</div>
+      <button class="btn-sm" onclick="openMeasureModal()">+ Update</button>
+    </div>
+    <div class="grid-2" style="margin-bottom:10px">
+      <div class="card-sm">
+        <div class="card-title">Weight</div>
+        <div class="metric-value" id="bm-weight" style="color:var(--green)">—</div>
+        <div class="metric-label">lbs · target 155</div>
+        <div class="metric-delta" id="bm-weight-delta"></div>
+      </div>
+      <div class="card-sm">
+        <div class="card-title">Waist</div>
+        <div class="metric-value" id="bm-waist" style="color:var(--amber)">—</div>
+        <div class="metric-label">inches · target &lt;35"</div>
+        <div class="metric-delta" id="bm-waist-delta"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Weight History</div>
+      <canvas id="body-weight-chart" height="80"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title">Measurements Log</div>
+      <div id="measurements-log">
+        <div class="empty-state" style="padding:1.5rem">
+          <div style="font-size:1.5rem;margin-bottom:0.5rem">📏</div>
+          <div class="empty-state-text">Tap Update to log weight and waist measurements.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="goal-panel-history" class="inner-panel">
+    <div id="completed-goals">
+      <div class="empty-state">
+        <div class="empty-state-icon">🏆</div>
+        <div class="empty-state-text">Completed goals will appear here.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ======= IMPORT ======= -->
+<div id="page-import" class="page">
+
+  <!-- Load data file prompt -->
+  <div id="load-data-section" style="background:#0F1E35;border:1px solid rgba(96,165,250,0.3);border-radius:10px;padding:1.1rem 1.25rem;margin-bottom:12px">
+    <div style="font-size:14px;font-weight:600;margin-bottom:4px">&#128196; Load your data file</div>
+    <div style="font-size:12px;color:rgba(255,255,255,0.45);margin-bottom:10px">Open <code style="background:#1C1F1D;padding:1px 5px;border-radius:3px;font-size:11px;color:#60A5FA">fitness_data.json</code> from your OneDrive folder to restore all your data.</div>
+    <label style="display:block;background:#1C1F1D;border:1px dashed rgba(96,165,250,0.3);border-radius:8px;padding:14px;text-align:center;cursor:pointer">
+      <input type="file" accept=".json" onchange="loadDataFile(this)" style="display:none">
+      <div style="font-size:1.5rem;margin-bottom:4px">&#128193;</div>
+      <div style="font-size:13px;color:#60A5FA;font-weight:500">Tap to open fitness_data.json</div>
+    </label>
+  </div>
+
+  <p class="eyebrow">Connect your data</p>
+
+  <div class="import-zone">
+    <div class="import-header">
+      <div class="import-logo">⌚</div>
+      <div class="import-name">Garmin Connect</div>
+      <span class="act-badge badge-green" style="margin-left:auto">CSV Import</span>
+    </div>
+    <div class="import-desc">Garmin's API requires server authentication, so this tracker uses CSV export — a one-minute process that syncs all your activities automatically.</div>
+    <div class="import-steps">
+      <strong>How to export:</strong><br>
+      1. Open <code>connect.garmin.com</code><br>
+      2. Go to <code>Activities</code> → scroll to bottom<br>
+      3. Click <code>Export CSV</code><br>
+      4. Drop the file below ↓
+    </div>
+    <div class="upload-zone" id="garmin-drop" style="margin-top:12px" ondragover="handleDrag(event,'garmin-drop')" ondragleave="handleDragLeave('garmin-drop')" ondrop="handleDrop(event,'garmin')">
+      <input type="file" accept=".csv" onchange="handleFileInput(this,'garmin')">
+      <div class="upload-icon">📂</div>
+      <div class="upload-text"><strong>Drop Garmin CSV here</strong> or tap to browse</div>
+    </div>
+    <div id="garmin-status" style="margin-top:8px;font-size:12px;color:var(--muted)"></div>
+  </div>
+
+  <div class="import-zone">
+    <div class="import-header">
+      <div class="import-logo">🟠</div>
+      <div class="import-name">Strava</div>
+      <span class="act-badge badge-green" style="margin-left:auto">API Auto-Sync</span>
+    </div>
+    <div class="import-desc">Enter your Strava access token once and sync activities on demand — no CSV, no email, no archive download.</div>
+    <div class="import-steps">
+      <strong>One-time setup (~3 min):</strong><br>
+      1. Go to <code>strava.com/settings/api</code> and create an app (any name)<br>
+      2. Visit: <code>https://www.strava.com/oauth/authorize?client_id=YOUR_ID&response_type=code&redirect_uri=http://localhost&approval_prompt=force&scope=activity:read_all</code><br>
+      3. Approve → copy the <code>code=</code> value from the redirect URL<br>
+      4. Exchange for a token via <code>strava.com/oauth/token</code> (POST) — paste result below<br>
+      <span style="color:var(--amber)">Or use a Strava token generator tool (search "Strava token generator") for a simpler flow.</span>
+    </div>
+    <div class="form-group" style="margin-top:12px">
+      <label class="form-label">Strava Access Token</label>
+      <input class="form-input" id="strava-token" type="password" placeholder="Paste your access token here" value="">
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="btn-sm btn-primary" onclick="stravaSync()" style="flex:1;padding:9px">🔄 Sync Now</button>
+      <button class="btn-sm" onclick="saveStravaToken()" style="padding:9px">Save Token</button>
+    </div>
+    <div id="strava-status" style="margin-top:8px;font-size:12px;color:var(--muted)"></div>
+  </div>
+
+  <div class="import-zone">
+    <div class="import-header">
+      <div class="import-logo">⌚</div>
+      <div class="import-name">Garmin Connect</div>
+      <span class="act-badge badge-green" style="margin-left:auto">CSV Import</span>
+    </div>
+    <div class="import-desc">Garmin's API has no browser-accessible token system. CSV export is the honest path — takes about 60 seconds.</div>
+    <div class="import-steps">
+      <strong>How to export:</strong><br>
+      1. Open <code>connect.garmin.com</code><br>
+      2. Go to <code>Activities</code> → scroll to bottom<br>
+      3. Click <code>Export CSV</code><br>
+      4. Drop the file below ↓
+    </div>
+    <div class="upload-zone" id="garmin-drop" style="margin-top:12px" ondragover="handleDrag(event,'garmin-drop')" ondragleave="handleDragLeave('garmin-drop')" ondrop="handleDrop(event,'garmin')">
+      <input type="file" accept=".csv" onchange="handleFileInput(this,'garmin')">
+      <div class="upload-icon">📂</div>
+      <div class="upload-text"><strong>Drop Garmin CSV here</strong> or tap to browse</div>
+    </div>
+    <div id="garmin-status" style="margin-top:8px;font-size:12px;color:var(--muted)"></div>
+  </div>
+
+  <div class="card" style="margin-top:10px">
+    <div class="card-title">Data Status</div>
+    <div id="data-status-rows">
+      <div class="bar-row"><div class="bar-label" style="min-width:100px">Activities</div><div class="bar-track"><div class="bar-fill" id="status-activities" style="width:0%;background:var(--blue)"></div></div><div class="bar-val" id="sval-activities">0</div></div>
+      <div class="bar-row"><div class="bar-label" style="min-width:100px">Meals</div><div class="bar-track"><div class="bar-fill" id="status-meals" style="width:0%;background:var(--green)"></div></div><div class="bar-val" id="sval-meals">0</div></div>
+      <div class="bar-row"><div class="bar-label" style="min-width:100px">Weigh-ins</div><div class="bar-track"><div class="bar-fill" id="status-weights" style="width:0%;background:var(--amber)"></div></div><div class="bar-val" id="sval-weights">0</div></div>
+    </div>
+    <button class="btn-sm" style="margin-top:12px;color:var(--red);border-color:var(--red)" onclick="clearAllData()">⚠ Clear all data</button>
+  </div>
+
+</div>
+
+</main>
+
+<!-- ===== MODALS ===== -->
+
+<!-- Meal Log Modal -->
+<div class="modal-overlay" id="meal-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('meal-modal')">✕</button>
+    <div class="modal-title">Log a Meal</div>
+    <!-- Mode selector -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px">
+      <button id="mmode-photo" onclick="setMealMode('photo')" style="background:var(--green-dim);border:1px solid rgba(74,222,128,0.4);border-radius:6px;padding:8px 4px;cursor:pointer;color:var(--green);font-size:11px;font-weight:600;font-family:'Instrument Sans',sans-serif">📷 Photo</button>
+      <button id="mmode-restaurant" onclick="setMealMode('restaurant')" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 4px;cursor:pointer;color:var(--muted);font-size:11px;font-weight:600;font-family:'Instrument Sans',sans-serif">🍽️ Restaurant</button>
+      <button id="mmode-manual" onclick="setMealMode('manual')" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 4px;cursor:pointer;color:var(--muted);font-size:11px;font-weight:600;font-family:'Instrument Sans',sans-serif">✏️ Manual</button>
+    </div>
+    <!-- Photo mode -->
+    <div id="meal-mode-photo">
+      <div class="upload-zone" id="meal-upload" ondragover="handleDrag(event,'meal-upload')" ondrop="handleMealDrop(event)" style="margin-bottom:10px">
+        <input type="file" accept="image/*" capture="environment" onchange="handleMealImage(this)">
+        <div class="upload-icon">📷</div>
+        <div class="upload-text"><strong>Take or upload a photo</strong><br><span style="font-size:11px">AI will identify your meal and estimate macros</span></div>
+      </div>
+      <div class="img-preview-wrap" id="meal-preview-wrap"><img id="meal-preview-img" class="img-preview" src="" alt="meal preview"></div>
+    </div>
+    <!-- Restaurant mode -->
+    <div id="meal-mode-restaurant" style="display:none">
+      <div class="form-group">
+        <label class="form-label">Restaurant name</label>
+        <input class="form-input" id="meal-restaurant" placeholder="e.g. Chipotle, Capital Grille">
+      </div>
+      <div class="form-group">
+        <label class="form-label">What did you order?</label>
+        <input class="form-input" id="meal-order" placeholder="e.g. Grilled chicken bowl, side salad, water">
+      </div>
+      <button class="btn-sm" style="width:100%;padding:8px;margin-bottom:10px" onclick="lookupRestaurantMeal()">🔍 Look up nutrition</button>
+    </div>
+    <!-- Manual mode -->
+    <div id="meal-mode-manual" style="display:none">
+      <div class="form-group">
+        <label class="form-label">Describe your meal</label>
+        <input class="form-input" id="meal-manual-desc" placeholder="e.g. Tofu stir-fry with broccoli and quinoa">
+      </div>
+      <button class="btn-sm" style="width:100%;padding:8px;margin-bottom:10px" onclick="analyzeManualMeal()">✦ Estimate macros with AI</button>
+    </div>
+    <!-- AI result -->
+    <div class="ai-loading" id="ai-loading"><span class="spinner"></span>Analyzing...</div>
+    <div class="ai-result" id="ai-result">
+      <div class="ai-result-title">✦ AI Analysis</div>
+      <div class="ai-result-text" id="ai-result-text"></div>
+    </div>
+    <hr class="div">
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Meal name</label><input class="form-input" id="meal-name" placeholder="e.g. Tofu stir-fry"></div>
+      <div class="form-group"><label class="form-label">Time</label><input class="form-input" id="meal-time" type="time"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Meal type</label>
+      <select class="form-select" id="meal-type">
+        <option value="Midday snack">Midday snack</option>
+        <option value="Dinner">Dinner</option>
+        <option value="Lunch">Lunch</option>
+        <option value="Snack">Afternoon snack</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Calories (est.)</label><input class="form-input" id="meal-cal" type="number" placeholder="—"></div>
+      <div class="form-group"><label class="form-label">Protein (g)</label><input class="form-input" id="meal-prot" type="number" placeholder="—"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Carbs (g)</label><input class="form-input" id="meal-carb" type="number" placeholder="—"></div>
+      <div class="form-group"><label class="form-label">Fat (g)</label><input class="form-input" id="meal-fat" type="number" placeholder="—"></div>
+    </div>
+    <button class="btn-sm btn-primary" style="width:100%;padding:10px;font-size:14px" onclick="saveMeal()">Save Meal</button>
+  </div>
+</div>
+
+<!-- Activity Modal -->
+<div class="modal-overlay" id="activity-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('activity-modal')">✕</button>
+    <div class="modal-title">Log Activity</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Type</label>
+        <select class="form-select" id="act-type">
+          <option value="Easy Run">Easy Run (Zone 2)</option>
+          <option value="Interval Run">Interval Run</option>
+          <option value="Long Run">Long Run</option>
+          <option value="Tempo Run">Tempo Run</option>
+          <option value="Strength">Strength Training</option>
+          <option value="Walk">Walk</option>
+          <option value="Rest">Rest/Recovery</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Date</label><input class="form-input" id="act-date" type="date"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Distance (mi)</label><input class="form-input" id="act-dist" type="number" step="0.1" placeholder="—"></div>
+      <div class="form-group">
+        <label class="form-label">Duration <span style="font-weight:300;opacity:0.6">— 45 · 45:30 · 1:15:00</span></label>
+        <input class="form-input" id="act-dur" type="text" placeholder="45 or 45:30 or 1:15:00" oninput="previewDuration(this)">
+        <div id="dur-preview" style="font-size:11px;color:var(--green);font-family:'JetBrains Mono',monospace;margin-top:3px;min-height:14px"></div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Avg HR (bpm)</label><input class="form-input" id="act-hr" type="number" placeholder="—"></div>
+      <div class="form-group"><label class="form-label">Avg Pace (min/mi)</label><input class="form-input" id="act-pace" placeholder="e.g. 10:30"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Notes</label><input class="form-input" id="act-notes" placeholder="Optional..."></div>
+    <button class="btn-sm btn-primary" style="width:100%;padding:10px;font-size:14px;margin-top:4px" onclick="saveActivity()">Save Activity</button>
+  </div>
+</div>
+
+<!-- Weight Modal -->
+<div class="modal-overlay" id="weight-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('weight-modal')">✕</button>
+    <div class="modal-title">Log Weight</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Weight (lbs)</label><input class="form-input" id="w-weight" type="number" step="0.1" placeholder="172.0"></div>
+      <div class="form-group"><label class="form-label">Date</label><input class="form-input" id="w-date" type="date"></div>
+    </div>
+    <button class="btn-sm btn-primary" style="width:100%;padding:10px;font-size:14px" onclick="saveWeight()">Save</button>
+  </div>
+</div>
+
+<!-- Measurement Modal -->
+<div class="modal-overlay" id="measure-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('measure-modal')">✕</button>
+    <div class="modal-title">Body Measurements</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Weight (lbs)</label><input class="form-input" id="m-weight" type="number" step="0.1" placeholder="172.0"></div>
+      <div class="form-group"><label class="form-label">Waist (inches)</label><input class="form-input" id="m-waist" type="number" step="0.25" placeholder="35.0"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Date</label><input class="form-input" id="m-date" type="date"></div>
+    <button class="btn-sm btn-primary" style="width:100%;padding:10px;font-size:14px" onclick="saveMeasurement()">Save</button>
+  </div>
+</div>
+
+<!-- Goal Modal -->
+<div class="modal-overlay" id="goal-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('goal-modal')">✕</button>
+    <div class="modal-title">New Goal</div>
+    <div class="form-group">
+      <label class="form-label">Goal Type</label>
+      <select class="form-select" id="g-type" onchange="updateGoalFields()">
+        <option value="race">Race / Event Training</option>
+        <option value="weight">Weight Target</option>
+        <option value="mileage">Monthly Mileage</option>
+        <option value="streak">Training Streak</option>
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">Goal Name</label><input class="form-input" id="g-name" placeholder="e.g. Indy Half Marathon"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Start Date</label><input class="form-input" id="g-start" type="date"></div>
+      <div class="form-group"><label class="form-label">Target Date</label><input class="form-input" id="g-end" type="date"></div>
+    </div>
+    <div class="form-row" id="goal-target-row">
+      <div class="form-group"><label class="form-label" id="g-target-lbl">Target Value</label><input class="form-input" id="g-target" placeholder="e.g. 155" type="number" step="0.1"></div>
+      <div class="form-group"><label class="form-label" id="g-current-lbl">Current Value</label><input class="form-input" id="g-current" placeholder="e.g. 172" type="number" step="0.1"></div>
+    </div>
+    <button class="btn-sm btn-primary" style="width:100%;padding:10px;font-size:14px" onclick="saveGoal()">Add Goal</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// STATE - file-based + localStorage fallback
+// ============================================================
+function defaultState() {
+  return {
+    activities: [],
+    meals: [],
+    weights: [],
+    measurements: [],
+    drinks: {},
+    goals: [],
+    settings: { cruiseDate: '2026-06-06', startWeight: 172, targetWeight: 155, startDate: '2026-03-29' }
+  };
+}
+
+let S = defaultState();
+
+function saveState(s) {
+  S = s;
+  // Try localStorage as best-effort cache
+  try { localStorage.setItem('dm_fitness_v3', JSON.stringify(S)); } catch {}
+  // Show save reminder after 3 sec of inactivity
+  clearTimeout(window._saveDebounce);
+  window._saveDebounce = setTimeout(() => showSaveReminder(), 3000);
+}
+
+function showSaveReminder() {
+  const el = document.getElementById('save-reminder');
+  if (el) el.style.display = 'flex';
+}
+function hideSaveReminder() {
+  const el = document.getElementById('save-reminder');
+  if (el) el.style.display = 'none';
+}
+
+function downloadData() {
+  const blob = new Blob([JSON.stringify(S, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'fitness_data.json'; a.click();
+  URL.revokeObjectURL(url);
+  hideSaveReminder();
+  showToast('Saved as fitness_data.json ✓');
+}
+
+function loadDataFile(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      S = { ...defaultState(), ...JSON.parse(e.target.result) };
+      try { localStorage.setItem('dm_fitness_v3', JSON.stringify(S)); } catch {}
+      renderDashboard(); renderImport();
+      const ls = document.getElementById('load-data-section');
+      if (ls) ls.style.display = 'none';
+      showToast('Data loaded — ' + S.activities.length + ' activities ✓');
+    } catch { showToast('Could not read file — use fitness_data.json'); }
+  };
+  reader.readAsText(file);
+}
+
+function tryBootstrap() {
+  // 1. Try localStorage first (works when flag is set or browser allows it)
+  try {
+    const saved = localStorage.getItem('dm_fitness_v3');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed && (parsed.activities?.length > 0 || parsed.weights?.length > 0)) {
+        S = { ...defaultState(), ...parsed };
+        return true;
+      }
+    }
+  } catch {}
+  return false;
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showPage(id, el, type) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  if (type === 'mobile') {
+    document.querySelectorAll('.mobile-nav-item').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+  } else {
+    document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    document.querySelectorAll('.mobile-nav-item').forEach(b => b.classList.remove('active'));
+    const mbi = document.querySelector(`.mobile-nav-item[onclick*="${id}"]`);
+    if (mbi) mbi.classList.add('active');
+  }
+  renderPage(id);
+}
+
+function showInner(prefix, id, el) {
+  document.querySelectorAll(`[id^="${prefix}-panel-"]`).forEach(p => p.classList.remove('active'));
+  document.getElementById(`${prefix}-panel-${id}`).classList.add('active');
+  el.closest('.inner-tabs').querySelectorAll('.inner-tab').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  // Determine which page is active and re-render it so charts draw at correct width
+  if (prefix === 'act') { setTimeout(() => { renderActivity(); if (id === 'compliance') renderCompliance(); }, 30); }
+  else if (prefix === 'goal') { setTimeout(() => renderGoals(), 30); }
+  else { renderPage('inner'); }
+}
+
+function renderPage(id) {
+  if (id === 'dashboard' || id === 'inner' || id === 'all') { renderDashboard(); }
+  if (id === 'activity') renderActivity();
+  if (id === 'nutrition') renderNutrition();
+  if (id === 'goals') renderGoals();
+  if (id === 'import') renderImport();
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function today() { return new Date().toISOString().split('T')[0]; }
+function todayObj() { return new Date(); }
+function weekKey() {
+  const d = new Date();
+  const jan1 = new Date(d.getFullYear(), 0, 1);
+  const wk = Math.ceil(((d - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+  return `${d.getFullYear()}-${wk}`;
+}
+function weekStart() {
+  const d = new Date();
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  return new Date(d.setDate(diff)).toISOString().split('T')[0];
+}
+function parseDate(s) { return s ? new Date(s + 'T12:00:00') : new Date(); }
+function fmtDate(s) { return parseDate(s).toLocaleDateString('en-US', {month:'short',day:'numeric'}); }
+function paceToSec(p) {
+  if (!p) return null;
+  const parts = p.split(':');
+  if (parts.length === 2) return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+  return null;
+}
+function secToPace(s) {
+  const m = Math.floor(s / 60);
+  const sec = Math.round(s % 60);
+  return `${m}:${sec.toString().padStart(2,'0')}`;
+}
+function daysBetween(a, b) { return Math.round((parseDate(b) - parseDate(a)) / 86400000); }
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ============================================================
+// DAILY CONTENT LIBRARY
+// ============================================================
+const CONTENT_LIBRARY = [
+  // CATHOLIC — Spiritual formation, faith & health
+  { type:'watch', icon:'▶', label:'Bishop Barron: The Meaning of Fasting', url:'https://www.youtube.com/watch?v=6o_9JCbNwQY', duration:'12 min', category:'catholic', tags:['fasting','lent','discipline'] },
+  { type:'listen', icon:'🎧', label:'Word on Fire Podcast — Daily Reflection', url:'https://open.spotify.com/show/4d0GJeZ0XVTOW9UQ5JfhAa', duration:'10 min', category:'catholic', tags:['prayer','daily'] },
+  { type:'read', icon:'📖', label:'Ignatian Prayer: The Examen — A Guide', url:'https://www.ignatianspirituality.com/ignatian-prayer/the-examen/', duration:'8 min', category:'catholic', tags:['examen','evening','reflection'] },
+  { type:'watch', icon:'▶', label:'Fr. Mike Schmitz: Why the Body Matters', url:'https://www.youtube.com/watch?v=mMHJCJSuGDc', duration:'15 min', category:'catholic', tags:['body','stewardship'] },
+  { type:'read', icon:'📖', label:'Augustine Institute: Temperance & the Body', url:'https://formed.org', duration:'10 min', category:'catholic', tags:['temperance','virtue'] },
+  { type:'watch', icon:'▶', label:'Bishop Barron: Gluttony — The Forgotten Sin', url:'https://www.youtube.com/watch?v=Y6uMNvwDDo4', duration:'10 min', category:'catholic', tags:['gluttony','sloth','virtue'] },
+  { type:'read', icon:'📖', label:'Catholic Answers: Caring for the Body as Spiritual Practice', url:'https://www.catholic.com/magazine/online-edition/the-body-as-temple', duration:'8 min', category:'catholic', tags:['body','temple','health'] },
+  { type:'watch', icon:'▶', label:'Fr. Mike Schmitz: Disordered Desires and How to Fix Them', url:'https://www.youtube.com/watch?v=BhNnf5b8bO8', duration:'12 min', category:'catholic', tags:['desire','habits','virtue'] },
+  { type:'listen', icon:'🎧', label:'The Rosary — Luminous Mysteries (audio)', url:'https://open.spotify.com/search/holy%20rosary%20luminous%20mysteries', duration:'20 min', category:'catholic', tags:['rosary','prayer','running'] },
+  { type:'read', icon:'📖', label:'EWTN: Holy Week Reflections', url:'https://www.ewtn.com/catholicism/seasons-and-feast-days/holy-week-83', duration:'10 min', category:'catholic', tags:['holy week','easter','lent'] },
+  { type:'watch', icon:'▶', label:'Bishop Barron on Lent: Why We Fast', url:'https://www.youtube.com/watch?v=NX5nqTLrqRo', duration:'8 min', category:'catholic', tags:['lent','fasting'] },
+  { type:'read', icon:'📖', label:'Dynamic Catholic: The One Thing — Matthew Kelly', url:'https://dynamiccatholic.com/the-one-thing.html', duration:'12 min', category:'catholic', tags:['habits','spiritual','growth'] },
+  { type:'watch', icon:'▶', label:'Ascension Presents: Running & the Spiritual Life', url:'https://www.youtube.com/c/AscensionPresents', duration:'10 min', category:'catholic', tags:['running','prayer','contemplation'] },
+
+  // RUNNING & ENDURANCE
+  { type:'read', icon:'📖', label:'Matt Fitzgerald: Why Easy Runs Are the Most Important', url:'https://www.8020endurance.com/the-importance-of-easy-runs/', duration:'8 min', category:'running', tags:['zone2','easy','80/20'] },
+  { type:'read', icon:'📖', label:'80/20 Running: The Science of the Easy Day', url:'https://www.runnersworld.com/training/a20825209/the-case-for-easy-runs/', duration:'10 min', category:'running', tags:['zone2','heart rate','easy'] },
+  { type:'watch', icon:'▶', label:'Why Zone 2 Training Changes Everything', url:'https://www.youtube.com/watch?v=wnRKlKAaSig', duration:'12 min', category:'running', tags:['zone2','fat adaptation','endurance'] },
+  { type:'read', icon:'📖', label:'Runner\'s World: Fat Adaptation for Endurance Athletes', url:'https://www.runnersworld.com/nutrition/a20840280/fat-adapted-running/', duration:'10 min', category:'running', tags:['fat adaptation','nutrition','endurance'] },
+  { type:'watch', icon:'▶', label:'Peter Attia: Zone 2 Training — The Complete Guide', url:'https://www.youtube.com/watch?v=hPGcI2VnJ2I', duration:'15 min', category:'running', tags:['zone2','longevity','heart rate'] },
+  { type:'read', icon:'📖', label:'How to Run Your First Half Marathon After 50', url:'https://www.runnersworld.com/training/a20845379/running-over-50/', duration:'10 min', category:'running', tags:['half marathon','age 50','training'] },
+  { type:'read', icon:'📖', label:'The Mental Benefits of Running — Why It Resets the Mind', url:'https://www.psychologytoday.com/us/blog/the-right-mindset/202002/why-running-is-so-good-for-your-brain', duration:'8 min', category:'running', tags:['mental health','introvert','restoration'] },
+  { type:'watch', icon:'▶', label:'Strength Training for Runners: The Minimum Effective Dose', url:'https://www.youtube.com/watch?v=p7HfvSLwLG4', duration:'12 min', category:'running', tags:['strength','runners','efficiency'] },
+
+  // NUTRITION & FASTING
+  { type:'read', icon:'📖', label:'Dr. Gundry: Intermittent Fasting and Metabolic Flexibility', url:'https://gundrymd.com/intermittent-fasting-benefits/', duration:'10 min', category:'nutrition', tags:['fasting','metabolism','gundry'] },
+  { type:'watch', icon:'▶', label:'How Intermittent Fasting Changes Your Body', url:'https://www.youtube.com/watch?v=RuOvn4UqznU', duration:'12 min', category:'nutrition', tags:['fasting','body composition','fat loss'] },
+  { type:'read', icon:'📖', label:'The Anti-Inflammatory Diet: What Runners Should Know', url:'https://www.runnersworld.com/nutrition/a26270893/anti-inflammatory-foods-for-runners/', duration:'8 min', category:'nutrition', tags:['anti-inflammatory','diet','vegan'] },
+  { type:'read', icon:'📖', label:'Plant-Based Protein for Endurance Athletes', url:'https://www.outsideonline.com/health/nutrition/plant-based-protein-athletes/', duration:'10 min', category:'nutrition', tags:['vegan','protein','plant-based'] },
+  { type:'watch', icon:'▶', label:'How to Get Enough Protein on a Plant-Based Diet', url:'https://www.youtube.com/watch?v=DCUxHqUMFoU', duration:'10 min', category:'nutrition', tags:['protein','vegan','plant-based'] },
+  { type:'read', icon:'📖', label:'Why Runners Accidentally Prevent Fat Loss', url:'https://www.runnersworld.com/weight-loss/a20852547/running-and-weight-loss/', duration:'8 min', category:'nutrition', tags:['fat loss','running','mistakes'] },
+
+  // LONGEVITY & HEALTH
+  { type:'watch', icon:'▶', label:'Peter Attia: The 4 Pillars of Longevity', url:'https://www.youtube.com/watch?v=DTCmprPCDqc', duration:'15 min', category:'health', tags:['longevity','health','sleep'] },
+  { type:'read', icon:'📖', label:'Why Sleep Is the Most Underrated Performance Tool', url:'https://www.hubermanlab.com/newsletter/sleep-toolkit', duration:'12 min', category:'health', tags:['sleep','performance','recovery'] },
+  { type:'watch', icon:'▶', label:'Andrew Huberman: Morning Routine for Peak Performance', url:'https://www.youtube.com/watch?v=gR_f-iwUGY4', duration:'15 min', category:'health', tags:['morning','routine','performance'] },
+  { type:'read', icon:'📖', label:'The Science of Walking After Meals for Blood Sugar', url:'https://www.healthline.com/nutrition/blood-sugar-after-eating', duration:'8 min', category:'health', tags:['blood sugar','walk','post-meal'] },
+  { type:'watch', icon:'▶', label:'Dr. Rhonda Patrick: Exercise and Longevity', url:'https://www.youtube.com/watch?v=uxM_CLsvieE', duration:'15 min', category:'health', tags:['exercise','longevity','science'] },
+  { type:'read', icon:'📖', label:'The Mesomorph-Endomorph: Training for Your Body Type', url:'https://www.acefitness.org/resources/everyone/blog/5187/understanding-body-types/', duration:'8 min', category:'health', tags:['body type','training','fat loss'] },
+];
+
+// ============================================================
+// HEADLINE SUGGESTION (day-of-week + data-aware + content link)
+// ============================================================
+function pickDailyContent(calendarBusy) {
+  const dow = new Date().getDay();
+  const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(),0,0)) / 86400000);
+
+  // Filter by day context
+  let pool = [...CONTENT_LIBRARY];
+
+  // On run days lean toward running content + Catholic
+  if (dow === 1 || dow === 3 || dow === 4 || dow === 6) {
+    pool = pool.filter(c => c.category === 'running' || c.category === 'catholic');
+  }
+  // On strength days lean toward health + Catholic
+  if (dow === 2 || dow === 5) {
+    pool = pool.filter(c => c.category === 'health' || c.category === 'catholic');
+  }
+  // Sunday lean Catholic
+  if (dow === 0) {
+    pool = pool.filter(c => c.category === 'catholic');
+  }
+
+  // If calendar is busy, prefer shorter content
+  if (calendarBusy) {
+    const short = pool.filter(c => parseInt(c.duration) <= 10);
+    if (short.length > 0) pool = short;
+  }
+
+  if (!pool.length) pool = CONTENT_LIBRARY;
+
+  // Rotate by day of year so it changes daily but is consistent
+  return pool[dayOfYear % pool.length];
+}
+
+function renderHeadline(calendarBusy) {
+  const dow = new Date().getDay();
+  const ws = weekStart();
+  const weekActs = S.activities.filter(a => a.date >= ws);
+  const hasIntervals = weekActs.some(a => a.type === 'Interval Run');
+  const strCount = weekActs.filter(a => a.type === 'Strength').length;
+  const weights = S.weights.sort((a,b) => a.date > b.date ? 1 : -1);
+  const latestW = weights.length ? weights[weights.length-1].weight : null;
+  const drinksThisWk = S.drinks[weekKey()] || 0;
+  const todayActs = S.activities.filter(a => a.date === today());
+  const ranToday = todayActs.some(a => a.type && a.type.includes('Run'));
+
+  const headlines = {
+    1: { label:'Monday · Easy run day', text:'Start the week in Zone 2. Protect the easy effort — HR under 150.', sub:'Fasted morning run sets fat oxidation for the day. No tempo creep today.' },
+    2: { label:'Tuesday · Strength day', text: strCount >= 1 ? 'Strength done this week — well executed.' : 'Office gym day. 25 minutes, 3 circuits. Muscle is your metabolic engine.', sub: strCount >= 1 ? 'Two sessions per week is the minimum for body recomposition alongside running.' : 'Squats · Pushups · Reverse lunges · Rows · Plank · Side leg raises.' },
+    3: { label:'Wednesday · Interval day', text: hasIntervals ? 'Intervals logged ✓ — the hardest and most important run of your week is done.' : 'Your one hard day. 10 min warmup · 5–6 × 2 min at 160–170 bpm · 10 min cooldown.', sub: hasIntervals ? 'This is what drives fat adaptation and pace improvement over weeks.' : 'This is your 20% hard effort for the week. Everything else stays easy.' },
+    4: { label:'Thursday · Easy run day', text:'Second easy run of the week. Same rule: Zone 2, HR under 150.', sub:'Back-to-back easy days after Wednesday intervals is optimal recovery.' },
+    5: { label:'Friday · Strength day', text: strCount >= 2 ? 'Both strength sessions done this week.' : 'Home free weights today. 25 minutes is enough to change your body composition.', sub:'No run today. Let Friday be pure strength and recovery before the long run.' },
+    6: { label:'Saturday · Long run', text:'Your best run of the week. No agenda, no pace pressure.', sub:'60–90 minutes. Outdoor. Music on Spotify. Let the mind wander. This is your restoration run.' },
+    0: { label:'Sunday · Rest + Mass', text:'Rest, Mass, and one batch cooking move: make the vegan chili for Monday.', sub:'A 20-minute walk counts as movement today. Recovery is training.' }
+  };
+
+  let hl = headlines[dow] || headlines[1];
+
+  if (!latestW) {
+    hl = { label:'Get started', text:'Log your starting weight to activate progress tracking.', sub:'Tap ⚖️ Log Weight below. Takes 10 seconds.' };
+  } else if (latestW <= S.settings.targetWeight) {
+    hl = { label:'Goal reached', text:`You're at ${latestW} lbs — target weight achieved.`, sub:'Now focus on maintaining and building fitness.' };
+  } else if (drinksThisWk >= 4 && (dow === 5 || dow === 6)) {
+    hl = { label:'Alcohol check', text:`${drinksThisWk} drinks logged this week — at the target ceiling.`, sub:'A social event is fine. Going over tonight means this week is a net negative for fat loss.' };
+  } else if (ranToday) {
+    hl = { label:'Run logged ✓', text:'Good work today. Recovery starts now.', sub:'Post-dinner walk tonight. Sleep by 11. Fasted morning tomorrow.' };
+  }
+
+  const labelEl = document.getElementById('headline-label');
+  const textEl = document.getElementById('headline-text');
+  const subEl = document.getElementById('headline-sub');
+  if (labelEl) labelEl.textContent = hl.label;
+  if (textEl) textEl.textContent = hl.text;
+  if (subEl) subEl.textContent = hl.sub;
+
+  // Pick and render content link
+  const content = pickDailyContent(calendarBusy);
+  const linkWrap = document.getElementById('headline-link-wrap');
+  const linkEl = document.getElementById('headline-link');
+  const linkIcon = document.getElementById('headline-link-icon');
+  const linkLabel = document.getElementById('headline-link-label');
+  const linkDur = document.getElementById('headline-link-duration');
+  if (linkWrap && content) {
+    linkWrap.style.display = 'block';
+    linkEl.href = content.url;
+    linkIcon.textContent = content.icon;
+    linkLabel.textContent = content.label;
+    linkDur.textContent = content.duration;
+  }
+}
+
+// ============================================================
+// FITNESS GOAL COUNTDOWN (no cruise framing)
+// ============================================================
+function renderCountdown() {
+  const targetDate = new Date(S.settings.cruiseDate + 'T12:00:00');
+  const now = new Date();
+  const days = Math.max(0, Math.ceil((targetDate - now) / 86400000));
+  const el = document.getElementById('cruise-days');
+  if (el) {
+    el.textContent = days > 0 ? `${days} days` : 'Goal date reached';
+    const sub = document.getElementById('cruise-sub');
+    if (sub) sub.textContent = days > 0 ? `to ${targetDate.toLocaleDateString('en-US',{month:'short',day:'numeric'})} target` : 'Keep the rhythm going';
+  }
+
+  // Progress rings
+  const totalDays = daysBetween(S.settings.startDate, S.settings.cruiseDate);
+  const elapsed = daysBetween(S.settings.startDate, today());
+  const timePct = Math.min(1, Math.max(0, elapsed / totalDays));
+
+  // Weight ring
+  const weights = S.weights.sort((a,b) => a.date > b.date ? 1 : -1);
+  const latestW = weights.length ? weights[weights.length-1].weight : S.settings.startWeight;
+  const wLost = S.settings.startWeight - latestW;
+  const wNeeded = S.settings.startWeight - S.settings.targetWeight;
+  const wPct = Math.min(1, Math.max(0, wLost / wNeeded));
+
+  setRing('ring-weight', wPct);
+  setRing('ring-runs', timePct);
+
+  // Goals page
+  const gdl = document.getElementById('goal-days-left');
+  if (gdl) gdl.textContent = days;
+  const gcw = document.getElementById('goal-current-week');
+  if (gcw) {
+    const wkNum = Math.ceil(elapsed / 7) + 1;
+    gcw.textContent = `Wk ${Math.min(9, Math.max(1, wkNum))} of 9`;
+  }
+  const cp = document.getElementById('cruise-progress');
+  if (cp) cp.style.width = (timePct * 100) + '%';
+  const gwn = document.getElementById('goal-weight-now');
+  if (gwn) gwn.textContent = latestW ? latestW + ' lbs' : '—';
+  const gtl = document.getElementById('goal-to-lose');
+  if (gtl) {
+    const rem = latestW - S.settings.targetWeight;
+    gtl.textContent = rem > 0 ? rem.toFixed(1) + ' lbs' : '✓ Goal!';
+    gtl.style.color = rem <= 0 ? 'var(--green)' : 'var(--amber)';
+  }
+
+  // 9-week grid
+  const grid = document.getElementById('nine-week-grid');
+  if (grid) {
+    grid.innerHTML = '';
+    const currentWk = Math.ceil(elapsed / 7) + 1;
+    const labels = ['','','Holy Wk','Easter','','Check in','','Check in','Milestone'];
+    for (let i = 1; i <= 9; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'nw-cell' + (i < currentWk ? ' done' : '') + (i === currentWk ? ' current' : '') + (i === 9 ? ' cruise' : '');
+      cell.innerHTML = `<div class="nw-num">Wk${i}</div><div class="nw-label">${labels[i-1] || ''}</div>`;
+      grid.appendChild(cell);
+    }
+    const milestoneArcs = [[3,4,'mb-wk3'],[5,6,'mb-wk5'],[7,8,'mb-wk7'],[9,9,'mb-wk9']];
+    milestoneArcs.forEach(([s,e,id]) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (currentWk > e) el.style.width = '100%';
+      else if (currentWk >= s) el.style.width = ((currentWk - s) / (e - s + 1) * 100) + '%';
+    });
+  }
+}
+
+function setRing(id, pct) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const circ = 150.8;
+  el.style.strokeDashoffset = circ - (pct * circ);
+}
+
+// ============================================================
+// WEEK GRID
+// ============================================================
+const WEEK_PLAN = {
+  1: { label:'Easy Run', icon:'👟', type:'run' },
+  2: { label:'Strength', icon:'🏋️', type:'strength' },
+  3: { label:'Intervals', icon:'⚡', type:'interval' },
+  4: { label:'Easy Run', icon:'👟', type:'run' },
+  5: { label:'Strength', icon:'🏋️', type:'strength' },
+  6: { label:'Long Run', icon:'🛤️', type:'run' },
+  0: { label:'Rest/Mass', icon:'✝️', type:'rest' }
+};
+
+function renderWeekGrid(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const ws = weekStart();
+  const dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const now = today();
+
+  container.innerHTML = '';
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(ws);
+    d.setDate(d.getDate() + i);
+    const ds = d.toISOString().split('T')[0];
+    const dow = d.getDay(); // 0=Sun
+    const plan = WEEK_PLAN[dow === 0 ? 0 : dow] || { label:'Rest', icon:'💤', type:'rest' };
+
+    const hasActivity = S.activities.some(a => a.date === ds);
+    const isPast = ds < now;
+    const isToday = ds === now;
+
+    // Get activity summary for this day
+    const dayActs = S.activities.filter(a => a.date === ds);
+    let actSummary = '';
+    if (dayActs.length) {
+      const a = dayActs[0];
+      const parts = [];
+      if (a.distance) parts.push(parseFloat(a.distance).toFixed(1)+'mi');
+      else if (a.duration) parts.push(Math.round(a.duration)+'min');
+      actSummary = parts.join(' ');
+    }
+
+    const cell = document.createElement('div');
+    cell.className = 'week-day' +
+      (hasActivity ? ' done' : '') +
+      (!hasActivity && isPast && plan.type !== 'rest' ? ' skipped' : '') +
+      (isToday ? ' today' : '');
+
+    cell.innerHTML = `
+      <div class="week-day-name">${dayNames[i]}</div>
+      <div class="week-day-icon">${hasActivity ? '✅' : plan.icon}</div>
+      <div class="week-day-label">${hasActivity ? (actSummary || 'Done') : (isPast && plan.type !== 'rest' ? 'Missed' : plan.label)}</div>
+    `;
+    cell.onclick = () => {
+      document.getElementById('act-date') && (document.getElementById('act-date').value = ds);
+      const at = document.getElementById('act-type');
+      if (at) {
+        if (plan.label.includes('Easy')) at.value = 'Easy Run';
+        else if (plan.label.includes('Interval')) at.value = 'Interval Run';
+        else if (plan.label.includes('Long')) at.value = 'Long Run';
+        else if (plan.label.includes('Strength')) at.value = 'Strength';
+      }
+      openActivityModal();
+    };
+    container.appendChild(cell);
+  }
+}
+
+// ============================================================
+// COACHING NUDGE
+// ============================================================
+function renderNudge() {
+  const nudge = document.getElementById('coaching-nudge');
+  const nudgeText = document.getElementById('nudge-text');
+  if (!nudge || !nudgeText) return;
+
+  const d = new Date();
+  const dow = d.getDay();
+  const todayActs = S.activities.filter(a => a.date === today());
+  const messages = [];
+
+  if (dow === 3 && !todayActs.some(a => a.type === 'Interval Run')) {
+    messages.push('Wednesday is your interval day — 10 min warmup, 5–6 × 2 min hard. Protects your 80/20 framework and is the highest-leverage run of the week.');
+  }
+  if (dow === 2 || dow === 5) {
+    const thisWkStr = S.activities.filter(a => a.date >= weekStart() && a.type === 'Strength');
+    if (thisWkStr.length === 0) messages.push('No strength sessions this week yet. 25–30 min circuit on Tue or Fri is the single biggest lever for changing body composition alongside your running.');
+  }
+
+  const drinksThisWk = S.drinks[weekKey()] || 0;
+  if (drinksThisWk >= 4) messages.push(`You're at ${drinksThisWk} drinks this week — that's the target max. The rest of the week, sparkling water or tequila soda goes just as far socially.`);
+
+  const weights = S.weights.sort((a,b) => a.date > b.date ? 1 : -1);
+  if (weights.length === 0) messages.push('Log your starting weight to activate the cruise progress rings and fat loss tracking.');
+
+  if (messages.length > 0) {
+    nudge.style.display = 'flex';
+    nudgeText.textContent = messages[0];
+  } else {
+    nudge.style.display = 'none';
+  }
+}
+
+// ============================================================
+// DASHBOARD RENDER
+// ============================================================
+function renderDashboard() {
+  renderCountdown();
+  // Calendar busy check — simple heuristic based on day/time
+  const now = new Date();
+  const dow = now.getDay();
+  const hour = now.getHours();
+  const calendarBusy = (dow >= 1 && dow <= 4) && (hour >= 8 && hour <= 17);
+  renderHeadline(calendarBusy);
+  renderNudge();
+  renderWeekGrid('week-grid');
+
+  const ws = weekStart();
+  const weekActs = S.activities.filter(a => a.date >= ws);
+  const weekMiles = weekActs.filter(a => a.distance).reduce((s, a) => s + parseFloat(a.distance || 0), 0);
+  const runCount = weekActs.filter(a => a.type && a.type.includes('Run')).length;
+
+  document.getElementById('dash-miles').textContent = weekMiles.toFixed(1);
+  document.getElementById('dash-runs-count').textContent = `${runCount} run${runCount !== 1 ? 's' : ''} · ${weekActs.length} total`;
+
+  const ytdActs = S.activities.filter(a => a.date >= new Date().getFullYear() + '-01-01');
+  const ytdMiles = ytdActs.reduce((s, a) => s + parseFloat(a.distance || 0), 0);
+  const dmi = document.getElementById('dash-ytd'); if (dmi) dmi.textContent = ytdMiles.toFixed(0);
+
+  // Month metrics
+  const now2 = new Date();
+  const moStart = `${now2.getFullYear()}-${String(now2.getMonth()+1).padStart(2,'0')}-01`;
+  const moActs = S.activities.filter(a => a.date >= moStart);
+  const moMiles = moActs.reduce((s,a) => s+parseFloat(a.distance||0), 0);
+  const moRuns = moActs.filter(a => a.type && a.type.includes('Run')).length;
+  const dmm = document.getElementById('dash-month-miles'); if (dmm) dmm.textContent = moMiles.toFixed(1);
+  const dmr = document.getElementById('dash-month-runs'); if (dmr) dmr.textContent = `${moRuns} run${moRuns!==1?'s':''}`;
+
+  const weights = S.weights.sort((a,b) => a.date > b.date ? 1 : -1);
+  if (weights.length) {
+    const latest = weights[weights.length - 1];
+    document.getElementById('dash-weight').textContent = latest.weight;
+    const prev = weights.length > 1 ? weights[weights.length - 2].weight : S.settings.startWeight;
+    const delta = (latest.weight - prev).toFixed(1);
+    const deltaEl = document.getElementById('dash-weight-delta');
+    deltaEl.textContent = (delta > 0 ? '▲' : '▼') + ' ' + Math.abs(delta) + ' lbs';
+    deltaEl.className = 'metric-delta ' + (delta > 0 ? 'delta-neg' : 'delta-pos');
+  } else {
+    document.getElementById('dash-weight').textContent = '—';
+  }
+
+  // Drink dots
+  renderDrinkDots();
+
+  // Today meals
+  renderTodayMealsDash();
+
+  // Charts
+  drawPaceChart();
+  drawWeightChart('weight-chart');
+}
+
+function renderTodayMealsDash() {
+  const cont = document.getElementById('today-meals-dash');
+  if (!cont) return;
+  const todayMeals = S.meals.filter(m => m.date === today());
+  if (!todayMeals.length) {
+    cont.innerHTML = `<div class="empty-state" style="padding:1.5rem"><div class="empty-state-icon">🥗</div><div class="empty-state-text">No meals logged today.<br>Tap <strong style="color:var(--text)">+ Log Meal</strong> to add with photo analysis.</div></div>`;
+    return;
+  }
+  cont.innerHTML = todayMeals.map(m => mealCardHTML(m)).join('');
+}
+
+// ============================================================
+// CHARTS
+// ============================================================
+function drawPaceChart() {
+  const canvas = document.getElementById('pace-chart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const pW = canvas.parentElement?.offsetWidth || 600;
+  canvas.width = pW * 2;
+  canvas.height = 160;
+  canvas.style.width = pW + 'px';
+  canvas.style.height = '80px';
+  ctx.scale(2, 1);
+
+  const easyRuns = S.activities
+    .filter(a => (a.type === 'Easy Run' || a.type === 'Long Run') && a.pace && a.hr)
+    .filter(a => parseFloat(a.hr) >= 120 && parseFloat(a.hr) <= 145)
+    .sort((a,b) => a.date > b.date ? 1 : -1)
+    .slice(-12);
+
+  const W = pW;
+  const H = 80;
+
+  ctx.clearRect(0, 0, W, H);
+
+  if (easyRuns.length < 2) {
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.font = '12px JetBrains Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('Log easy runs with HR to see your fat adaptation trend here', W/2, H/2);
+    return;
+  }
+
+  const paces = easyRuns.map(r => paceToSec(r.pace)).filter(Boolean);
+  const minP = Math.min(...paces) - 15;
+  const maxP = Math.max(...paces) + 15;
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 3; i++) {
+    const y = (i / 3) * H;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+
+  // Line
+  ctx.beginPath();
+  easyRuns.forEach((r, i) => {
+    const ps = paceToSec(r.pace);
+    if (!ps) return;
+    const x = (i / (easyRuns.length - 1)) * W;
+    const y = ((ps - minP) / (maxP - minP)) * H;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = '#60A5FA';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Area
+  ctx.beginPath();
+  easyRuns.forEach((r, i) => {
+    const ps = paceToSec(r.pace);
+    if (!ps) return;
+    const x = (i / (easyRuns.length - 1)) * W;
+    const y = ((ps - minP) / (maxP - minP)) * H;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
+  const grad = ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,'rgba(96,165,250,0.2)');
+  grad.addColorStop(1,'rgba(96,165,250,0)');
+  ctx.fillStyle = grad; ctx.fill();
+
+  // Points
+  easyRuns.forEach((r, i) => {
+    const ps = paceToSec(r.pace);
+    if (!ps) return;
+    const x = (i / (easyRuns.length - 1)) * W;
+    const y = ((ps - minP) / (maxP - minP)) * H;
+    ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2);
+    ctx.fillStyle = '#60A5FA'; ctx.fill();
+  });
+
+  // Labels
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  ctx.font = '10px JetBrains Mono, monospace';
+  ctx.textAlign = 'left';
+  const firstP = paceToSec(easyRuns[0].pace);
+  const lastP = paceToSec(easyRuns[easyRuns.length-1].pace);
+  if (firstP && lastP) {
+    const diff = firstP - lastP;
+    ctx.fillStyle = diff > 0 ? '#4ADE80' : '#F87171';
+    ctx.textAlign = 'right';
+    ctx.fillText(`${diff > 0 ? '▼' : '▲'} ${Math.abs(diff)}s/mi vs first run`, W - 4, H - 4);
+  }
+}
+
+function drawWeightChart(canvasId) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const wW = canvas.closest('.card')?.offsetWidth || canvas.parentElement?.offsetWidth || 600;
+  const wWi = wW - 40;
+  canvas.width = wWi * 2;
+  canvas.height = 160;
+  canvas.style.width = wWi + 'px';
+  canvas.style.height = '80px';
+  ctx.scale(2, 1);
+
+  const weights = S.weights.sort((a,b) => a.date > b.date ? 1 : -1).slice(-16);
+  const W = wWi;
+  const H = 80;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Target line
+  const targetW = S.settings.targetWeight;
+  const allVals = [...weights.map(w => w.weight), targetW, S.settings.startWeight];
+  const minV = Math.min(...allVals) - 2;
+  const maxV = Math.max(...allVals) + 2;
+
+  // Target line
+  const ty = ((targetW - minV) / (maxV - minV)) * H;
+  ctx.setLineDash([4, 4]);
+  ctx.strokeStyle = 'rgba(74,222,128,0.4)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0, ty); ctx.lineTo(W, ty); ctx.stroke();
+  ctx.setLineDash([]);
+
+  if (weights.length < 2) {
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.font = '12px JetBrains Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('Log your weight to see the trend here (dashed = 155 target)', W/2, H/2);
+    return;
+  }
+
+  ctx.beginPath();
+  weights.forEach((w, i) => {
+    const x = (i / (weights.length - 1)) * W;
+    const y = ((w.weight - minV) / (maxV - minV)) * H;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = '#A78BFA';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  const grad2 = ctx.createLinearGradient(0,0,0,H);
+  grad2.addColorStop(0,'rgba(167,139,250,0.15)');
+  grad2.addColorStop(1,'rgba(167,139,250,0)');
+  ctx.beginPath();
+  weights.forEach((w, i) => {
+    const x = (i / (weights.length - 1)) * W;
+    const y = ((w.weight - minV) / (maxV - minV)) * H;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
+  ctx.fillStyle = grad2; ctx.fill();
+
+  weights.forEach((w, i) => {
+    const x = (i / (weights.length - 1)) * W;
+    const y = ((w.weight - minV) / (maxV - minV)) * H;
+    ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2);
+    ctx.fillStyle = '#A78BFA'; ctx.fill();
+  });
+
+  ctx.fillStyle = 'rgba(74,222,128,0.7)';
+  ctx.font = '10px JetBrains Mono, monospace';
+  ctx.textAlign = 'right';
+  ctx.fillText('TARGET: 155', W - 4, ty - 4);
+}
+
+function drawYTDChart() {
+  const canvas = document.getElementById('ytd-chart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  // Get width from parent card since canvas may be in a hidden panel
+  const parentW = canvas.closest('.card')?.offsetWidth || canvas.parentElement?.offsetWidth || 600;
+  const W = parentW - 40; // account for card padding
+  canvas.width = W * 2;
+  canvas.height = 200;
+  canvas.style.width = W + 'px';
+  canvas.style.height = '100px';
+  ctx.scale(2, 1);
+
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const year = new Date().getFullYear();
+  const byMonth = months.map((_, mi) => {
+    const prefix = `${year}-${String(mi+1).padStart(2,'0')}`;
+    return S.activities.filter(a => a.date && a.date.startsWith(prefix)).reduce((s, a) => s + parseFloat(a.distance || 0), 0);
+  });
+
+  const H = 100;
+  const maxM = Math.max(...byMonth, 1);
+  const barW = W / 12 * 0.6;
+  const gap = W / 12 * 0.4;
+
+  ctx.clearRect(0, 0, W, H);
+
+  byMonth.forEach((val, i) => {
+    const x = i * (W / 12) + gap / 2;
+    const h = (val / maxM) * (H - 20);
+    const y = H - h - 14;
+
+    const isFuture = i > new Date().getMonth();
+
+    ctx.fillStyle = isFuture ? 'rgba(255,255,255,0.05)' : 'rgba(96,165,250,0.7)';
+    ctx.beginPath();
+    ctx.roundRect ? ctx.roundRect(x, y, barW, h, 3) : ctx.rect(x, y, barW, h);
+    ctx.fill();
+
+    ctx.fillStyle = isFuture ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.5)';
+    ctx.font = '9px JetBrains Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(months[i], x + barW/2, H - 2);
+
+    if (val > 0) {
+      ctx.fillStyle = '#60A5FA';
+      ctx.fillText(val.toFixed(0), x + barW/2, y - 2);
+    }
+  });
+}
+
+function drawProteinChart() {
+  const canvas = document.getElementById('protein-chart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth * 2;
+  canvas.height = 140;
+  ctx.scale(2, 1);
+
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    days.push(d.toISOString().split('T')[0]);
+  }
+
+  const vals = days.map(ds => {
+    const meals = S.meals.filter(m => m.date === ds);
+    return meals.reduce((s, m) => s + parseFloat(m.protein || 0), 0);
+  });
+
+  const W = canvas.offsetWidth;
+  const H = 70;
+  const maxV = Math.max(...vals, 50);
+  const barW = W / 7 * 0.55;
+  const gap = W / 7 * 0.45;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Target line at 35g
+  const tl = H - (35 / maxV) * (H - 14);
+  ctx.setLineDash([3,3]);
+  ctx.strokeStyle = 'rgba(74,222,128,0.4)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0, tl); ctx.lineTo(W, tl); ctx.stroke();
+  ctx.setLineDash([]);
+
+  vals.forEach((v, i) => {
+    const x = i * (W / 7) + gap / 2;
+    const h = (v / maxV) * (H - 14);
+    const y = H - h;
+    ctx.fillStyle = v >= 30 ? 'rgba(74,222,128,0.7)' : 'rgba(245,158,11,0.6)';
+    ctx.beginPath();
+    ctx.roundRect ? ctx.roundRect(x, y, barW, h, 2) : ctx.rect(x, y, barW, h);
+    ctx.fill();
+    const dl = new Date(days[i] + 'T12:00:00');
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.font = '9px JetBrains Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(dl.toLocaleDateString('en-US',{weekday:'short'}).slice(0,2), x + barW/2, H + 0);
+    if (v > 0) {
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.fillText(Math.round(v) + 'g', x + barW/2, y - 2);
+    }
+  });
+}
+
+// ============================================================
+// ACTIVITY RENDER
+// ============================================================
+function renderActivity() {
+  renderWeekGrid('week-grid-full');
+
+  const ws = weekStart();
+  const weekActs = S.activities.filter(a => a.date >= ws);
+  const weekMiles = weekActs.filter(a => a.distance).reduce((s, a) => s + parseFloat(a.distance || 0), 0);
+  const weekRuns = weekActs.filter(a => a.type && a.type.includes('Run')).length;
+  const avgHR = weekActs.filter(a => a.hr).length ?
+    Math.round(weekActs.filter(a => a.hr).reduce((s, a) => s + parseFloat(a.hr), 0) / weekActs.filter(a => a.hr).length) : 0;
+
+  document.getElementById('act-wk-miles').textContent = weekMiles.toFixed(1);
+  document.getElementById('act-wk-runs').textContent = weekRuns;
+  document.getElementById('act-wk-hr').textContent = avgHR || '—';
+
+  // Week activity list
+  const wkCont = document.getElementById('week-activities');
+  if (wkCont) {
+    if (!weekActs.length) {
+      wkCont.innerHTML = `<div style="font-size:12px;color:var(--muted);text-align:center;padding:0.75rem">No activities logged this week. Tap a day above to log.</div>`;
+    } else {
+      wkCont.innerHTML = weekActs.sort((a,b) => b.date > a.date ? 1 : -1).map(a => activityRowHTML(a)).join('');
+    }
+  }
+
+  // Monthly
+  const now = new Date();
+  const moStart = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
+  const moActs = S.activities.filter(a => a.date >= moStart);
+  const moMiles = moActs.reduce((s,a) => s+parseFloat(a.distance||0), 0);
+  const moRuns = moActs.filter(a => a.type && a.type.includes('Run')).length;
+  const moStr = moActs.filter(a => a.type === 'Strength').length;
+  const el = document.getElementById('act-mo-miles'); if (el) el.textContent = moMiles.toFixed(1);
+  const el2 = document.getElementById('act-mo-runs'); if (el2) el2.textContent = moRuns;
+  const el3 = document.getElementById('act-mo-str'); if (el3) el3.textContent = moStr;
+
+  // Monthly bars
+  const mbCont = document.getElementById('monthly-bars');
+  if (mbCont) {
+    const maxDayMiles = Math.max(...moActs.map(a => parseFloat(a.distance||0)), 5);
+    mbCont.innerHTML = moActs.sort((a,b) => a.date > b.date ? 1 : -1).map(a => `
+      <div class="bar-row">
+        <div class="bar-label" style="min-width:50px;font-size:11px">${fmtDate(a.date)}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.min(100,(parseFloat(a.distance||0)/maxDayMiles)*100)}%;background:${actColor(a.type)}"></div></div>
+        <div class="bar-val" style="font-size:11px;min-width:70px;text-align:right">${a.type}<br><span style="color:var(--muted)">${a.distance ? a.distance+'mi' : ''} ${a.duration?a.duration+'min':''}</span></div>
+      </div>`).join('') || `<div style="font-size:12px;color:var(--muted);text-align:center;padding:1rem">No activities this month.</div>`;
+  }
+
+  // YTD
+  const yrStart = `${now.getFullYear()}-01-01`;
+  const ytdActs = S.activities.filter(a => a.date >= yrStart);
+  const ytdMiles = ytdActs.reduce((s,a) => s+parseFloat(a.distance||0), 0);
+  const ytdRuns = ytdActs.filter(a => a.type && a.type.includes('Run')).length;
+  const ytdStr = ytdActs.filter(a => a.type === 'Strength').length;
+  const ytdHours = Math.round(ytdActs.reduce((s,a) => s+parseFloat(a.duration||0), 0) / 60);
+  const e1 = document.getElementById('ytd-miles'); if (e1) e1.textContent = ytdMiles.toFixed(0);
+  const e2 = document.getElementById('ytd-runs'); if (e2) e2.textContent = ytdRuns;
+  const e3 = document.getElementById('ytd-strength'); if (e3) e3.textContent = ytdStr;
+  const e4 = document.getElementById('ytd-hours'); if (e4) e4.textContent = ytdHours;
+  const dmi = document.getElementById('dash-ytd'); if (dmi) dmi.textContent = ytdMiles.toFixed(0);
+
+  // Full log
+  const flCont = document.getElementById('full-log');
+  if (flCont) {
+    if (!S.activities.length) {
+      flCont.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📭</div><div class="empty-state-text">No activities yet. Import from Garmin CSV or add manually.</div></div>`;
+    } else {
+      const sorted = [...S.activities].sort((a,b) => b.date > a.date ? 1 : -1);
+      flCont.innerHTML = sorted.map(a => activityRowHTML(a)).join('');
+    }
+  }
+
+  drawYTDChart();
+}
+
+function actColor(type) {
+  if (!type) return 'var(--muted)';
+  if (type.includes('Interval')) return 'var(--red)';
+  if (type.includes('Long')) return 'var(--blue)';
+  if (type.includes('Run')) return 'var(--green)';
+  if (type === 'Strength') return 'var(--purple)';
+  return 'var(--muted)';
+}
+
+function activityRowHTML(a) {
+  const icons = { 'Easy Run':'👟', 'Interval Run':'⚡', 'Long Run':'🛤️', 'Tempo Run':'🏃', 'Strength':'🏋️', 'Walk':'🚶', 'Rest':'💤' };
+  const badgeClass = { 'Easy Run':'badge-green', 'Interval Run':'badge-red', 'Long Run':'badge-blue', 'Strength':'badge-amber', 'Walk':'badge-green' };
+  const icon = icons[a.type] || '🏃';
+  const badge = badgeClass[a.type] || 'badge-green';
+  const meta = [a.distance && a.distance+'mi', a.duration && a.duration+'min', a.hr && a.hr+'bpm avg', a.pace && a.pace+'/mi'].filter(Boolean).join(' · ');
+  return `<div class="activity-row">
+    <div class="act-icon">${icon}</div>
+    <div class="act-body">
+      <div class="act-name">${a.type || 'Activity'}</div>
+      <div class="act-meta">${fmtDate(a.date)} ${meta ? '· ' + meta : ''}</div>
+      ${a.notes ? `<div class="act-meta" style="margin-top:2px;color:rgba(255,255,255,0.2)">${a.notes}</div>` : ''}
+    </div>
+    <span class="act-badge ${badge}">${a.type || '—'}</span>
+  </div>`;
+}
+
+// ============================================================
+// NUTRITION RENDER
+// ============================================================
+function renderNutrition() {
+  const todayMeals = S.meals.filter(m => m.date === today());
+  const totCal = todayMeals.reduce((s,m) => s+parseFloat(m.calories||0), 0);
+  const totProt = todayMeals.reduce((s,m) => s+parseFloat(m.protein||0), 0);
+  const totCarb = todayMeals.reduce((s,m) => s+parseFloat(m.carbs||0), 0);
+  const totFat = todayMeals.reduce((s,m) => s+parseFloat(m.fat||0), 0);
+
+  document.getElementById('nut-cal').textContent = totCal || '—';
+  document.getElementById('nut-prot').innerHTML = totProt ? `${Math.round(totProt)}<span style="font-size:11px">g</span>` : '—<span style="font-size:11px">g</span>';
+  document.getElementById('nut-carb').innerHTML = totCarb ? `${Math.round(totCarb)}<span style="font-size:11px">g</span>` : '—<span style="font-size:11px">g</span>';
+  document.getElementById('nut-fat').innerHTML = totFat ? `${Math.round(totFat)}<span style="font-size:11px">g</span>` : '—<span style="font-size:11px">g</span>';
+
+  const protGoal = 35, carbGoal = 150, fatGoal = 60;
+  document.getElementById('bar-prot').style.width = Math.min(100, (totProt / protGoal) * 100) + '%';
+  document.getElementById('bar-carb').style.width = Math.min(100, (totCarb / carbGoal) * 100) + '%';
+  document.getElementById('bar-fat').style.width = Math.min(100, (totFat / fatGoal) * 100) + '%';
+  document.getElementById('bval-prot').textContent = Math.round(totProt) + 'g';
+  document.getElementById('bval-carb').textContent = Math.round(totCarb) + 'g';
+  document.getElementById('bval-fat').textContent = Math.round(totFat) + 'g';
+
+  const mlCont = document.getElementById('meal-log-list');
+  if (mlCont) {
+    if (!todayMeals.length) {
+      mlCont.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📷</div><div class="empty-state-text">Snap a photo of your meal — AI will identify it and estimate macros automatically.</div></div>`;
+    } else {
+      mlCont.innerHTML = todayMeals.map(m => mealCardHTML(m)).join('');
+    }
+  }
+  drawProteinChart();
+}
+
+function mealCardHTML(m) {
+  return `<div class="meal-card">
+    <div class="meal-img">${m.emoji || '🍽️'}</div>
+    <div class="meal-body">
+      <div class="meal-name">${m.name || 'Meal'}</div>
+      <div class="meal-macros">
+        <div class="meal-macro-item"><div class="meal-macro-label">CAL</div><div class="meal-macro-val">${m.calories || '—'}</div></div>
+        <div class="meal-macro-item"><div class="meal-macro-label">PROT</div><div class="meal-macro-val">${m.protein ? Math.round(m.protein)+'g' : '—'}</div></div>
+        <div class="meal-macro-item"><div class="meal-macro-label">CARB</div><div class="meal-macro-val">${m.carbs ? Math.round(m.carbs)+'g' : '—'}</div></div>
+        <div class="meal-macro-item"><div class="meal-macro-label">FAT</div><div class="meal-macro-val">${m.fat ? Math.round(m.fat)+'g' : '—'}</div></div>
+      </div>
+      <div class="meal-time">${m.mealType || ''} · ${m.time || ''}</div>
+    </div>
+  </div>`;
+}
+
+// ============================================================
+// GOALS RENDER
+// ============================================================
+function renderGoals() {
+  renderCountdown();
+  const bw = S.weights.sort((a,b) => a.date > b.date ? 1 : -1);
+  const lw = bw.length ? bw[bw.length-1].weight : null;
+  document.getElementById('bm-weight').textContent = lw ? lw + ' lbs' : '—';
+  document.getElementById('bm-waist').textContent = S.measurements.length ?
+    S.measurements[S.measurements.length-1].waist + '"' : '—';
+
+  const mlog = document.getElementById('measurements-log');
+  if (mlog) {
+    const ms = [...S.measurements].sort((a,b) => b.date > a.date ? 1 : -1);
+    if (!ms.length) {
+      mlog.innerHTML = `<div class="empty-state" style="padding:1.5rem"><div style="font-size:1.5rem;margin-bottom:0.5rem">📏</div><div class="empty-state-text">Tap Update to log weight and waist measurements.</div></div>`;
+    } else {
+      mlog.innerHTML = ms.slice(0,8).map(m => `
+        <div class="activity-row" style="padding:8px 0">
+          <div class="act-body">
+            <div class="act-name" style="font-size:13px">${fmtDate(m.date)}</div>
+            <div class="act-meta">${m.weight ? m.weight+'lbs' : ''} ${m.waist ? '· waist: '+m.waist+'"' : ''}</div>
+          </div>
+        </div>`).join('');
+    }
+  }
+
+  drawWeightChart('body-weight-chart');
+
+  // Active goals
+  const cont = document.getElementById('active-goals-list');
+  if (cont) {
+    const userGoals = S.goals.filter(g => g.status === 'active');
+    if (!userGoals.length) {
+      cont.innerHTML = `<div style="font-size:12px;color:var(--muted);margin-bottom:0.75rem">Your custom training goals will appear here.</div>`;
+    } else {
+      cont.innerHTML = userGoals.map(g => goalBlockHTML(g)).join('');
+    }
+  }
+}
+
+function goalBlockHTML(g) {
+  const total = daysBetween(g.startDate, g.endDate);
+  const elapsed = daysBetween(g.startDate, today());
+  const pct = Math.min(100, Math.max(0, (elapsed / total) * 100));
+  const daysLeft = Math.max(0, daysBetween(today(), g.endDate));
+  return `<div class="goal-block">
+    <div class="goal-header">
+      <div><div class="goal-name">${g.name}</div><div class="goal-dates">${fmtDate(g.startDate)} → ${fmtDate(g.endDate)} · <span style="color:var(--amber)">${daysLeft} days left</span></div></div>
+      <span class="act-badge badge-green">Active</span>
+    </div>
+    <div class="goal-progress-track"><div class="goal-progress-fill" style="width:${pct}%"></div></div>
+    <div class="goal-stats">
+      <div class="goal-stat"><div class="goal-stat-label">Progress</div><div class="goal-stat-val">${pct.toFixed(0)}%</div></div>
+      ${g.target ? `<div class="goal-stat"><div class="goal-stat-label">Target</div><div class="goal-stat-val" style="color:var(--green)">${g.target}</div></div>` : ''}
+      ${g.current ? `<div class="goal-stat"><div class="goal-stat-label">Current</div><div class="goal-stat-val">${g.current}</div></div>` : ''}
+    </div>
+  </div>`;
+}
+
+// ============================================================
+// IMPORT RENDER
+// ============================================================
+function renderImport() {
+  loadStravaToken();
+  const acts = S.activities.length;
+  const meals = S.meals.length;
+  const weights = S.weights.length;
+  const maxV = Math.max(acts, meals, weights, 1);
+  const s1 = document.getElementById('status-activities'); if (s1) s1.style.width = (acts/maxV*100)+'%';
+  const s2 = document.getElementById('status-meals'); if (s2) s2.style.width = (meals/maxV*100)+'%';
+  const s3 = document.getElementById('status-weights'); if (s3) s3.style.width = (weights/maxV*100)+'%';
+  const v1 = document.getElementById('sval-activities'); if (v1) v1.textContent = acts;
+  const v2 = document.getElementById('sval-meals'); if (v2) v2.textContent = meals;
+  const v3 = document.getElementById('sval-weights'); if (v3) v3.textContent = weights;
+}
+
+// ============================================================
+// DRINK TRACKER
+// ============================================================
+function renderDrinkDots() {
+  const cont = document.getElementById('drink-dots');
+  if (!cont) return;
+  const wk = weekKey();
+  const count = S.drinks[wk] || 0;
+  const goal = 4;
+  const dots = Math.max(count, goal);
+  cont.innerHTML = '';
+  for (let i = 0; i < dots; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'drink-dot' + (i < count ? (i < goal ? ' used' : ' over') : '');
+    dot.textContent = i < count ? '🍷' : '';
+    dot.onclick = () => {
+      if (i < count) {
+        S.drinks[wk] = count - 1;
+      } else {
+        S.drinks[wk] = (S.drinks[wk] || 0) + 1;
+      }
+      saveState(S);
+      renderDrinkDots();
+      updateDashDrinks();
+    };
+    cont.appendChild(dot);
+  }
+  const statusEl = document.getElementById('drink-status');
+  if (statusEl) {
+    if (count === 0) statusEl.textContent = 'None this week — great start.';
+    else if (count < goal) statusEl.textContent = `${count} of ${goal} this week. ${goal - count} remaining.`;
+    else if (count === goal) statusEl.textContent = `At the 4-drink target. Hold here.`;
+    else statusEl.textContent = `${count} this week — ${count - goal} over target.`;
+  }
+  updateDashDrinks();
+}
+
+function toggleDrink() {
+  const wk = weekKey();
+  S.drinks[wk] = (S.drinks[wk] || 0) + 1;
+  saveState(S);
+  renderDrinkDots();
+}
+
+function updateDashDrinks() {
+  const wk = weekKey();
+  const count = S.drinks[wk] || 0;
+  const el = document.getElementById('dash-drinks');
+  const sub = document.getElementById('dash-drinks-sub');
+  if (el) el.textContent = count;
+  if (sub) {
+    sub.textContent = '/ 4 goal';
+    sub.className = 'metric-delta ' + (count > 4 ? 'delta-neg' : count === 4 ? 'delta-neu' : 'delta-pos');
+  }
+}
+
+// ============================================================
+// MODALS
+// ============================================================
+function openMealModal() {
+  const modal = document.getElementById('meal-modal');
+  modal.classList.add('open');
+  const now = new Date();
+  document.getElementById('meal-time').value = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  document.getElementById('meal-name').value = '';
+  document.getElementById('meal-cal').value = '';
+  document.getElementById('meal-prot').value = '';
+  document.getElementById('meal-carb').value = '';
+  document.getElementById('meal-fat').value = '';
+  document.getElementById('ai-result').classList.remove('show');
+  document.getElementById('ai-loading').classList.remove('show');
+  document.getElementById('meal-preview-wrap').classList.remove('show');
+}
+
+function openActivityModal() {
+  document.getElementById('activity-modal').classList.add('open');
+  if (!document.getElementById('act-date').value)
+    document.getElementById('act-date').value = today();
+}
+
+function openWeightModal() {
+  document.getElementById('weight-modal').classList.add('open');
+  document.getElementById('w-date').value = today();
+}
+
+function openMeasureModal() {
+  document.getElementById('measure-modal').classList.add('open');
+  document.getElementById('m-date').value = today();
+}
+
+function openGoalModal() {
+  document.getElementById('goal-modal').classList.add('open');
+  document.getElementById('g-start').value = today();
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+// ============================================================
+// MEAL AI ANALYSIS
+// ============================================================
+let currentMealImageData = null;
+
+async function handleMealImage(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const dataUrl = e.target.result;
+    currentMealImageData = dataUrl.split(',')[1];
+
+    document.getElementById('meal-preview-img').src = dataUrl;
+    document.getElementById('meal-preview-wrap').classList.add('show');
+
+    await analyzeMealWithAI(currentMealImageData, file.type || 'image/jpeg');
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleMealDrop(e) {
+  e.preventDefault();
+  const file = e.dataTransfer.files[0];
+  if (!file || !file.type.startsWith('image/')) return;
+  const fakeInput = { files: [file] };
+  handleMealImage(fakeInput);
+}
+
+async function analyzeMealWithAI(base64Data, mediaType) {
+  document.getElementById('ai-loading').classList.add('show');
+  document.getElementById('ai-result').classList.remove('show');
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: { type: 'base64', media_type: mediaType, data: base64Data }
+            },
+            {
+              type: 'text',
+              text: `Analyze this meal photo. The person is a 52-year-old endurance runner following an intermittent fasting protocol with a plant-forward diet and protein target of 30-40g at dinner.
+
+Return ONLY valid JSON (no markdown, no explanation):
+{
+  "name": "short meal name",
+  "emoji": "single relevant emoji",
+  "calories": estimated_calories_number,
+  "protein": estimated_protein_grams_number,
+  "carbs": estimated_carbs_grams_number,
+  "fat": estimated_fat_grams_number,
+  "mealType": "Midday snack|Dinner|Lunch|Afternoon snack",
+  "notes": "1-2 sentence coaching note for this specific meal in context of runner fat loss goals",
+  "onPlan": true_or_false
+}`
+            }
+          ]
+        }]
+      })
+    });
+
+    const data = await response.json();
+    const textContent = data.content?.find(c => c.type === 'text')?.text;
+    const parsed = JSON.parse(textContent.trim());
+
+    document.getElementById('meal-name').value = parsed.name || '';
+    document.getElementById('meal-cal').value = parsed.calories || '';
+    document.getElementById('meal-prot').value = parsed.protein || '';
+    document.getElementById('meal-carb').value = parsed.carbs || '';
+    document.getElementById('meal-fat').value = parsed.fat || '';
+    if (parsed.mealType) document.getElementById('meal-type').value = parsed.mealType;
+
+    document.getElementById('ai-result-text').innerHTML =
+      `<strong style="color:var(--green)">${parsed.name}</strong> · ~${parsed.calories} cal · ${parsed.protein}g protein<br>
+       <span style="color:var(--muted);font-size:12px">${parsed.notes}</span>
+       ${parsed.onPlan ? "<br><span style='color:var(--green);font-size:11px'>&#10003; On plan</span>" : "<br><span style='color:var(--amber);font-size:11px'>&#9889; Minor adjustment noted</span>"}` ;
+    document.getElementById('ai-result').classList.add('show');
+  } catch (err) {
+    document.getElementById('ai-result-text').innerHTML = `<span style="color:var(--muted)">Could not analyze photo. Please fill in the details manually.</span>`;
+    document.getElementById('ai-result').classList.add('show');
+  }
+
+  document.getElementById('ai-loading').classList.remove('show');
+}
+
+// ============================================================
+// SAVE FUNCTIONS
+// ============================================================
+function saveMeal() {
+  const name = document.getElementById('meal-name').value;
+  if (!name) { showToast('Add a meal name'); return; }
+
+  S.meals.push({
+    id: Date.now(),
+    date: today(),
+    name,
+    mealType: document.getElementById('meal-type').value,
+    time: document.getElementById('meal-time').value,
+    calories: parseFloat(document.getElementById('meal-cal').value) || 0,
+    protein: parseFloat(document.getElementById('meal-prot').value) || 0,
+    carbs: parseFloat(document.getElementById('meal-carb').value) || 0,
+    fat: parseFloat(document.getElementById('meal-fat').value) || 0,
+    emoji: '🍽️',
+    hasImage: !!currentMealImageData
+  });
+  saveState(S);
+  closeModal('meal-modal');
+  currentMealImageData = null;
+  renderNutrition();
+  renderTodayMealsDash();
+  renderImport();
+  showToast('Meal logged ✓');
+}
+
+function parseDurationToMinutes(val) {
+  if (!val || val.trim() === '') return null;
+  val = val.trim();
+  // Plain number = minutes
+  if (/^\d+(\.\d+)?$/.test(val)) return parseFloat(val);
+  // MM:SS — two parts, first part likely <60 → treat as h:mm or m:ss
+  const parts = val.split(':').map(Number);
+  if (parts.length === 2) {
+    // If first part looks like hours (e.g. 1:15), return h*60+m
+    // If first part >=60 it's definitely minutes:seconds
+    if (parts[0] < 10) return parts[0] * 60 + parts[1]; // h:mm
+    return parts[0] + parts[1] / 60; // mm:ss → decimal minutes
+  }
+  if (parts.length === 3) return parts[0] * 60 + parts[1] + parts[2] / 60; // h:mm:ss
+  return null;
+}
+
+function previewDuration(input) {
+  const mins = parseDurationToMinutes(input.value);
+  const el = document.getElementById('dur-preview');
+  if (!el) return;
+  if (mins === null || isNaN(mins)) { el.textContent = ''; return; }
+  const h = Math.floor(mins / 60);
+  const m = Math.floor(mins % 60);
+  const s = Math.round((mins % 1) * 60);
+  el.textContent = h > 0
+    ? `→ ${h}h ${m}m${s > 0 ? ' '+s+'s' : ''} (${mins.toFixed(1)} min)`
+    : `→ ${m}m${s > 0 ? ' '+s+'s' : ''} (${mins.toFixed(1)} min)`;
+}
+
+function saveActivity() {
+  const type = document.getElementById('act-type').value;
+  const date = document.getElementById('act-date').value || today();
+  const durMins = parseDurationToMinutes(document.getElementById('act-dur').value);
+
+  S.activities.push({
+    id: Date.now(),
+    date,
+    type,
+    distance: parseFloat(document.getElementById('act-dist').value) || null,
+    duration: durMins,
+    hr: parseFloat(document.getElementById('act-hr').value) || null,
+    pace: document.getElementById('act-pace').value || null,
+    notes: document.getElementById('act-notes').value || null,
+    source: 'manual'
+  });
+  saveState(S);
+  closeModal('activity-modal');
+  renderDashboard();
+  renderActivity();
+  renderImport();
+  showToast('Activity logged ✓');
+}
+
+function saveWeight() {
+  const w = parseFloat(document.getElementById('w-weight').value);
+  if (!w) { showToast('Enter a weight'); return; }
+  const date = document.getElementById('w-date').value || today();
+  S.weights = S.weights.filter(x => x.date !== date);
+  S.weights.push({ date, weight: w });
+  saveState(S);
+  closeModal('weight-modal');
+  renderDashboard();
+  renderGoals();
+  renderImport();
+  showToast('Weight logged ✓');
+}
+
+function saveMeasurement() {
+  const w = parseFloat(document.getElementById('m-weight').value);
+  const waist = parseFloat(document.getElementById('m-waist').value);
+  const date = document.getElementById('m-date').value || today();
+  if (!w && !waist) { showToast('Enter at least one measurement'); return; }
+  S.measurements = S.measurements.filter(x => x.date !== date);
+  S.measurements.push({ date, weight: w || null, waist: waist || null });
+  if (w) {
+    S.weights = S.weights.filter(x => x.date !== date);
+    S.weights.push({ date, weight: w });
+  }
+  saveState(S);
+  closeModal('measure-modal');
+  renderGoals();
+  renderDashboard();
+  renderImport();
+  showToast('Measurements saved ✓');
+}
+
+function saveGoal() {
+  const name = document.getElementById('g-name').value;
+  if (!name) { showToast('Give the goal a name'); return; }
+  S.goals.push({
+    id: Date.now(),
+    name,
+    type: document.getElementById('g-type').value,
+    startDate: document.getElementById('g-start').value,
+    endDate: document.getElementById('g-end').value,
+    target: document.getElementById('g-target').value,
+    current: document.getElementById('g-current').value,
+    status: 'active'
+  });
+  saveState(S);
+  closeModal('goal-modal');
+  renderGoals();
+  showToast('Goal added ✓');
+}
+
+// ============================================================
+// STRAVA API SYNC
+// ============================================================
+function saveStravaToken() {
+  const token = document.getElementById('strava-token').value.trim();
+  if (!token) { showToast('Paste your Strava token first'); return; }
+  localStorage.setItem('strava_token', token);
+  showToast('Token saved ✓');
+}
+
+function loadStravaToken() {
+  const token = localStorage.getItem('strava_token') || '';
+  const el = document.getElementById('strava-token');
+  if (el && token) el.value = token;
+}
+
+async function stravaSync() {
+  const token = document.getElementById('strava-token').value.trim() || localStorage.getItem('strava_token');
+  if (!token) { showToast('Enter your Strava access token first'); return; }
+  localStorage.setItem('strava_token', token);
+
+  const statusEl = document.getElementById('strava-status');
+  if (statusEl) statusEl.textContent = '⏳ Fetching from Strava...';
+
+  try {
+    // Fetch up to 200 most recent activities (Strava max per_page=200)
+    const res = await fetch('https://www.strava.com/api/v3/athlete/activities?per_page=200', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      if (statusEl) statusEl.textContent = `✗ Strava error: ${err.message || res.status}. Token may be expired.`;
+      return;
+    }
+
+    const activities = await res.json();
+    if (!Array.isArray(activities)) {
+      if (statusEl) statusEl.textContent = '✗ Unexpected response from Strava.';
+      return;
+    }
+
+    const existingIds = new Set(S.activities.map(a => a.stravaId).filter(Boolean));
+    let imported = 0;
+
+    for (const act of activities) {
+      if (existingIds.has(act.id)) continue;
+
+      // Map Strava type to our types
+      const typeMap = {
+        'Run': 'Easy Run', 'VirtualRun': 'Easy Run',
+        'Walk': 'Walk', 'Hike': 'Walk',
+        'WeightTraining': 'Strength', 'Workout': 'Strength',
+        'Ride': 'Walk', 'VirtualRide': 'Walk'
+      };
+      let type = typeMap[act.sport_type] || typeMap[act.type] || 'Easy Run';
+
+      // Refine run type based on workout_type flag
+      // 0=default, 1=race, 2=long run, 3=workout
+      if ((act.sport_type === 'Run' || act.type === 'Run') && act.workout_type === 2) type = 'Long Run';
+      if ((act.sport_type === 'Run' || act.type === 'Run') && act.workout_type === 3) type = 'Interval Run';
+
+      const date = act.start_date_local ? act.start_date_local.split('T')[0] : null;
+      if (!date) continue;
+
+      const distanceMi = act.distance ? (act.distance / 1609.34).toFixed(2) : null;
+      const durationMins = act.moving_time ? parseFloat((act.moving_time / 60).toFixed(1)) : null;
+      const avgHR = act.average_heartrate ? Math.round(act.average_heartrate) : null;
+
+      // Pace: moving_time (sec) / distance (m) → sec/meter → convert to min/mile
+      let pace = null;
+      if (act.moving_time && act.distance && act.distance > 100) {
+        const secPerMile = (act.moving_time / act.distance) * 1609.34;
+        const paceMin = Math.floor(secPerMile / 60);
+        const paceSec = Math.round(secPerMile % 60);
+        pace = `${paceMin}:${String(paceSec).padStart(2,'0')}`;
+      }
+
+      S.activities.push({
+        id: Date.now() + imported,
+        stravaId: act.id,
+        date,
+        type,
+        name: act.name || null,
+        distance: distanceMi ? parseFloat(distanceMi) : null,
+        duration: durationMins,
+        hr: avgHR,
+        pace,
+        source: 'strava'
+      });
+      imported++;
+    }
+
+    saveState(S);
+    if (statusEl) statusEl.textContent = `✓ Synced ${imported} new activities from Strava (${activities.length} total fetched)`;
+    renderDashboard();
+    renderActivity();
+    renderImport();
+    showToast(`Strava: ${imported} new activities synced`);
+  } catch (err) {
+    if (statusEl) statusEl.textContent = `✗ Network error. Check token and try again. (${err.message})`;
+  }
+}
+
+// ============================================================
+// CSV IMPORT
+// ============================================================
+function handleDrag(e, id) {
+  e.preventDefault();
+  document.getElementById(id).classList.add('dragover');
+}
+function handleDragLeave(id) {
+  document.getElementById(id).classList.remove('dragover');
+}
+function handleDrop(e, source) {
+  e.preventDefault();
+  const file = e.dataTransfer.files[0];
+  if (file) processCSV(file, source);
+}
+function handleFileInput(input, source) {
+  if (input.files[0]) processCSV(input.files[0], source);
+}
+
+function processCSV(file, source) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const text = e.target.result;
+    const rows = text.split('\n').map(r => r.split(',').map(c => c.replace(/^"|"$/g,'').trim()));
+    if (rows.length < 2) return;
+    const headers = rows[0].map(h => h.toLowerCase().replace(/\s+/g,'_'));
+
+    let imported = 0;
+    const existingIds = new Set(S.activities.map(a => a.date + '_' + a.type));
+
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      if (row.length < 3) continue;
+      const obj = {};
+      headers.forEach((h, idx) => { obj[h] = row[idx] || ''; });
+
+      let date = obj.date || obj.activity_date || obj.start_time || '';
+      if (date.includes('T')) date = date.split('T')[0];
+      if (date.includes(' ')) date = date.split(' ')[0];
+      // Normalize date format
+      if (date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        // good
+      } else if (date.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+        const [m, d2, y] = date.split('/');
+        date = `${y}-${m}-${d2}`;
+      } else continue;
+
+      const typeRaw = (obj.activity_type || obj.type || obj.sport || '').toLowerCase();
+      let type = 'Easy Run';
+      if (typeRaw.includes('strength') || typeRaw.includes('weight')) type = 'Strength';
+      else if (typeRaw.includes('interval') || typeRaw.includes('track')) type = 'Interval Run';
+      else if (typeRaw.includes('long') && typeRaw.includes('run')) type = 'Long Run';
+      else if (typeRaw.includes('walk')) type = 'Walk';
+      else if (typeRaw.includes('run') || typeRaw.includes('jogg')) type = 'Easy Run';
+
+      const dist = parseFloat(obj.distance || obj.distance_(mi) || obj.distance_mi || 0) || null;
+      const durStr = obj.moving_time || obj.elapsed_time || obj.time || obj.duration || '';
+      let dur = null;
+      if (durStr.includes(':')) {
+        const parts = durStr.split(':').map(Number);
+        if (parts.length === 3) dur = Math.round(parts[0]*60 + parts[1] + parts[2]/60);
+        else if (parts.length === 2) dur = parts[0] + Math.round(parts[1]/60);
+      } else dur = parseFloat(durStr) || null;
+
+      const hr = parseFloat(obj.avg_hr || obj.average_heart_rate || obj.heart_rate_avg || 0) || null;
+      const paceRaw = obj.avg_pace || obj.average_pace || '';
+      const pace = paceRaw.match(/\d+:\d+/) ? paceRaw.match(/\d+:\d+/)[0] : null;
+
+      const dedupeKey = date + '_' + type;
+      if (existingIds.has(dedupeKey)) continue;
+      existingIds.add(dedupeKey);
+
+      S.activities.push({ id: Date.now() + i, date, type, distance: dist, duration: dur, hr, pace, source });
+      imported++;
+    }
+
+    saveState(S);
+    const statusEl = document.getElementById(source + '-status');
+    if (statusEl) statusEl.textContent = `✓ Imported ${imported} activities`;
+    renderDashboard();
+    renderActivity();
+    renderImport();
+    showToast(`Imported ${imported} activities from ${source === 'garmin' ? 'Garmin' : 'Strava'}`);
+  };
+  reader.readAsText(file);
+}
+
+// ============================================================
+// MISC
+// ============================================================
+function updateGoalFields() {
+  const t = document.getElementById('g-type').value;
+  const lbl = document.getElementById('g-target-lbl');
+  const clbl = document.getElementById('g-current-lbl');
+  const map = { race: ['Race Date', 'Start Date'], weight: ['Target Weight (lbs)', 'Current Weight (lbs)'], mileage: ['Monthly Miles Goal', 'Current Month Miles'], streak: ['Target Days', 'Current Days'] };
+  if (map[t]) { lbl.textContent = map[t][0]; clbl.textContent = map[t][1]; }
+}
+
+function clearAllData() {
+  if (confirm('Clear all logged data? This cannot be undone.')) {
+    S = defaultState();
+    saveState(S);
+    renderDashboard();
+    renderImport();
+    showToast('Data cleared');
+  }
+}
+
+// ============================================================
+// COMPLIANCE CALENDAR
+// ============================================================
+function renderCompliance() {
+  const grid = document.getElementById('compliance-grid');
+  if (!grid) return;
+
+  const todayStr = today();
+  const days = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    days.push(d.toISOString().split('T')[0]);
+  }
+
+  const PLAN_DAYS = { 1:'run', 2:'strength', 3:'run', 4:'run', 5:'strength', 6:'run', 0:'rest' };
+
+  let done = 0, missed = 0;
+  grid.innerHTML = '';
+
+  days.forEach(ds => {
+    const d = new Date(ds + 'T12:00:00');
+    const dow = d.getDay();
+    const plan = PLAN_DAYS[dow];
+    const acts = S.activities.filter(a => a.date === ds);
+    const hasRun = acts.some(a => a.type && a.type.includes('Run'));
+    const hasStr = acts.some(a => a.type === 'Strength');
+    const isFuture = ds > todayStr;
+    const isToday = ds === todayStr;
+    const isRest = plan === 'rest';
+
+    let status = 'rest';
+    if (!isFuture && !isRest) {
+      if (plan === 'run' && hasRun) status = 'done';
+      else if (plan === 'strength' && hasStr) status = 'done';
+      else if (!isToday) status = 'missed';
+      else status = 'today';
+    }
+    if (isFuture) status = 'future';
+
+    if (!isFuture && !isRest) {
+      if (status === 'done') done++;
+      else if (status === 'missed') missed++;
+    }
+
+    const planLabel = { run:'Run', strength:'Strength', rest:'Rest' }[plan];
+    const actSummary = acts.length ? acts.map(a => {
+      const parts = [];
+      if (a.distance) parts.push(parseFloat(a.distance).toFixed(1)+'mi');
+      if (a.duration) parts.push(Math.round(a.duration)+'min');
+      if (!parts.length) parts.push(a.type);
+      return parts.join(' ');
+    }).join(', ') : '';
+
+    const colors = {
+      done: 'background:var(--green-dim);border-color:rgba(74,222,128,0.4)',
+      missed: 'background:var(--red-dim);border-color:rgba(248,113,113,0.3)',
+      rest: 'background:var(--surface2);border-color:var(--border)',
+      future: 'background:rgba(245,158,11,0.06);border-color:rgba(245,158,11,0.2)',
+      today: 'background:rgba(245,158,11,0.1);border-color:var(--amber)'
+    };
+    const icons = { done:'✅', missed:'❌', rest:'—', future:'·', today:'○' };
+    const dayNames = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+
+    const cell = document.createElement('div');
+    cell.style.cssText = `border:1px solid;border-radius:5px;padding:5px 3px;text-align:center;${colors[status]}`;
+    cell.innerHTML = `
+      <div style="font-size:8px;color:rgba(255,255,255,0.3);font-family:JetBrains Mono,monospace">${dayNames[dow]}</div>
+      <div style="font-size:14px;line-height:1.4">${icons[status]}</div>
+      <div style="font-size:8px;color:rgba(255,255,255,0.4);font-family:JetBrains Mono,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${planLabel}</div>
+      ${actSummary ? `<div style="font-size:7px;color:rgba(255,255,255,0.5);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${actSummary}</div>` : ''}
+    `;
+    cell.title = `${ds} · ${planLabel}${actSummary ? ' · '+actSummary : ''}`;
+    grid.appendChild(cell);
+  });
+
+  const total = done + missed;
+  const pct = total > 0 ? Math.round((done/total)*100) : 0;
+  const pctEl = document.getElementById('compliance-pct');
+  if (pctEl) { pctEl.textContent = pct+'%'; pctEl.style.color = pct >= 80 ? 'var(--green)' : pct >= 60 ? 'var(--amber)' : 'var(--red)'; }
+
+  // YTD compliance
+  const yrStart = new Date().getFullYear() + '-01-01';
+  let ytdDone = 0, ytdMissed = 0;
+  const allDays = [];
+  const startD = new Date(yrStart);
+  const endD = new Date(todayStr);
+  for (let d = new Date(startD); d <= endD; d.setDate(d.getDate()+1)) {
+    allDays.push(d.toISOString().split('T')[0]);
+  }
+  allDays.forEach(ds => {
+    const dow2 = new Date(ds+'T12:00:00').getDay();
+    const plan2 = PLAN_DAYS[dow2];
+    if (plan2 === 'rest') return;
+    const acts2 = S.activities.filter(a => a.date === ds);
+    const hasRun2 = acts2.some(a => a.type && a.type.includes('Run'));
+    const hasStr2 = acts2.some(a => a.type === 'Strength');
+    if ((plan2==='run'&&hasRun2)||(plan2==='strength'&&hasStr2)) ytdDone++;
+    else if (ds < todayStr) ytdMissed++;
+  });
+  const ytdTotal = ytdDone + ytdMissed;
+  const ytdPct = ytdTotal > 0 ? Math.round((ytdDone/ytdTotal)*100) : 0;
+  const cd = document.getElementById('comp-ytd-done'); if (cd) cd.textContent = ytdDone;
+  const cm = document.getElementById('comp-ytd-missed'); if (cm) cm.textContent = ytdMissed;
+  const cp2 = document.getElementById('comp-ytd-pct'); if (cp2) { cp2.textContent = ytdPct+'%'; cp2.style.color = ytdPct >= 80 ? 'var(--green)' : ytdPct >= 60 ? 'var(--amber)' : 'var(--red)'; }
+}
+
+// ============================================================
+// MEAL MODE SWITCHER + RESTAURANT LOOKUP
+// ============================================================
+function setMealMode(mode) {
+  ['photo','restaurant','manual'].forEach(m => {
+    const panel = document.getElementById('meal-mode-' + m);
+    const btn = document.getElementById('mmode-' + m);
+    if (panel) panel.style.display = m === mode ? 'block' : 'none';
+    if (btn) {
+      btn.style.background = m === mode ? 'var(--green-dim)' : 'var(--surface2)';
+      btn.style.borderColor = m === mode ? 'rgba(74,222,128,0.4)' : 'var(--border)';
+      btn.style.color = m === mode ? 'var(--green)' : 'var(--muted)';
+    }
+  });
+}
+
+async function lookupRestaurantMeal() {
+  const restaurant = document.getElementById('meal-restaurant').value.trim();
+  const order = document.getElementById('meal-order').value.trim();
+  if (!restaurant || !order) { showToast('Enter restaurant and what you ordered'); return; }
+
+  document.getElementById('ai-loading').classList.add('show');
+  document.getElementById('ai-result').classList.remove('show');
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        messages: [{ role: 'user', content: `Search for the nutrition information for this restaurant meal and return estimated macros. Restaurant: "${restaurant}". Order: "${order}". The person is a 52-year-old endurance runner, intermittent faster, plant-forward diet, protein target 30-40g at dinner. Return ONLY valid JSON: {"name":"meal name","calories":number,"protein":number,"carbs":number,"fat":number,"notes":"1 sentence coaching note","onPlan":true_or_false}` }]
+      })
+    });
+    const data = await response.json();
+    const textContent = data.content?.find(c => c.type === 'text')?.text;
+    const parsed = JSON.parse(textContent.replace(/```json|```/g,'').trim());
+    document.getElementById('meal-name').value = parsed.name || `${order} @ ${restaurant}`;
+    document.getElementById('meal-cal').value = parsed.calories || '';
+    document.getElementById('meal-prot').value = parsed.protein || '';
+    document.getElementById('meal-carb').value = parsed.carbs || '';
+    document.getElementById('meal-fat').value = parsed.fat || '';
+    document.getElementById('ai-result-text').innerHTML = `<strong style="color:var(--green)">${parsed.name}</strong> · ~${parsed.calories} cal · ${parsed.protein}g protein<br><span style="color:var(--muted);font-size:12px">${parsed.notes}</span>${parsed.onPlan ? "<br><span style='color:var(--green);font-size:11px'>&#10003; On plan</span>" : "<br><span style='color:var(--amber);font-size:11px'>&#9889; Minor adjustment noted</span>"}`;
+    document.getElementById('ai-result').classList.add('show');
+  } catch {
+    document.getElementById('ai-result-text').innerHTML = '<span style="color:var(--muted)">Could not look up nutrition. Fill in manually.</span>';
+    document.getElementById('ai-result').classList.add('show');
+  }
+  document.getElementById('ai-loading').classList.remove('show');
+}
+
+async function analyzeManualMeal() {
+  const desc = document.getElementById('meal-manual-desc').value.trim();
+  if (!desc) { showToast('Describe your meal first'); return; }
+  document.getElementById('ai-loading').classList.add('show');
+  document.getElementById('ai-result').classList.remove('show');
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 600,
+        messages: [{ role: 'user', content: `Estimate macros for this meal: "${desc}". Person is a 52-year-old endurance runner, intermittent faster, plant-forward, protein target 30-40g dinner. Return ONLY valid JSON: {"name":"short name","calories":number,"protein":number,"carbs":number,"fat":number,"notes":"1 sentence note","onPlan":true_or_false}` }]
+      })
+    });
+    const data = await response.json();
+    const text = data.content?.find(c => c.type === 'text')?.text;
+    const parsed = JSON.parse(text.replace(/```json|```/g,'').trim());
+    document.getElementById('meal-name').value = parsed.name || desc;
+    document.getElementById('meal-cal').value = parsed.calories || '';
+    document.getElementById('meal-prot').value = parsed.protein || '';
+    document.getElementById('meal-carb').value = parsed.carbs || '';
+    document.getElementById('meal-fat').value = parsed.fat || '';
+    document.getElementById('ai-result-text').innerHTML = `<strong style="color:var(--green)">${parsed.name}</strong> · ~${parsed.calories} cal · ${parsed.protein}g protein<br><span style="color:var(--muted);font-size:12px">${parsed.notes}</span>`;
+    document.getElementById('ai-result').classList.add('show');
+  } catch {
+    document.getElementById('ai-result-text').innerHTML = '<span style="color:var(--muted)">Could not estimate. Fill in manually.</span>';
+    document.getElementById('ai-result').classList.add('show');
+  }
+  document.getElementById('ai-loading').classList.remove('show');
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  const loaded = tryBootstrap();
+  if (loaded) {
+    const ls = document.getElementById('load-data-section');
+    if (ls) ls.style.display = 'none';
+  }
+  renderDashboard();
+  renderImport();
+  setTimeout(() => {
+    drawPaceChart();
+    drawWeightChart('weight-chart');
+  }, 100);
+});
+
+window.addEventListener('resize', () => {
+  drawPaceChart();
+  drawWeightChart('weight-chart');
+  if (document.getElementById('ytd-chart')) drawYTDChart();
+  if (document.getElementById('protein-chart')) drawProteinChart();
+});
+</script>
+</body>
+</html>
